@@ -1,0 +1,45 @@
+# The only automatic merge barrier (branch protection must require both
+# jobs): portable, deterministic — never models, goldens, or audio fixtures.
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS — build chain + swift test
+    runs-on: macos-26 # arm64 + Xcode 26, the README prerequisites
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+      - name: Build chain (cargo → UniFFI → XCFramework → SwiftPM app)
+        run: ./build.sh
+      # Through the real FFI: catches binding drift the build alone misses.
+      - name: swift test
+        run: swift test --package-path app
+
+  linux:
+    name: Linux — cargo test
+    # Platform-bound dependencies (sherpa-onnx, cpal, …) must land behind
+    # features that keep this default-features build green.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+      - name: cargo test
+        run: cargo test --workspace --manifest-path core/Cargo.toml

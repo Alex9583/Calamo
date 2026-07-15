@@ -30,6 +30,13 @@ cargo test --manifest-path core/Cargo.toml   # Rust workspace (no I/O, no models
 swift test --package-path app                # Swift side, through the real FFI (./build.sh first)
 ```
 
+## CI
+
+Every push runs [ci.yml](.github/workflows/ci.yml), the only automatic merge
+barrier: full build chain + `swift test` on macOS, `cargo test` on Linux
+(portability). CI never touches models, goldens, or audio fixtures — those
+stay local.
+
 ## Layout
 
 | Path | Role |
