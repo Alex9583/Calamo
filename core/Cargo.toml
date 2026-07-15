@@ -1,0 +1,18 @@
+# One dependency direction:
+#   calamo-core (pure domain) ← calamo-adapters ← calamo-ffi (UniFFI staticlib)
+[workspace]
+resolver = "2"
+members = ["calamo-core", "calamo-adapters", "calamo-ffi"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+calamo-core = { path = "calamo-core" }
+calamo-adapters = { path = "calamo-adapters" }
+# pre-1.0: exact pin
+uniffi = "=0.32.0"
+
+[profile.release]
+lto = "thin"

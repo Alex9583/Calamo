@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 230 660 560" width="660" height="560">
+  <!-- Calamo — standalone mark (single color, inherits currentColor). -->
+  <g fill="currentColor">
+    <rect x="228" y="460" width="56" height="120" rx="28"/>
+    <rect x="316" y="405" width="56" height="230" rx="28"/>
+    <rect x="404" y="340" width="56" height="360" rx="28"/>
+    <path fill-rule="evenodd" d="M 502 714
+             C 560 640 614 548 674 472
+             C 734 396 764 320 760 242
+             C 818 304 838 404 800 508
+             C 760 616 642 692 502 714 Z
+             M 512 694 L 610 556 L 594 544 L 498 684 Z"/>
+  </g>
+</svg>

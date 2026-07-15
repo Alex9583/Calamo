@@ -1,0 +1,7 @@
+[package]
+name = "calamo-adapters"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+calamo-core = { workspace = true }

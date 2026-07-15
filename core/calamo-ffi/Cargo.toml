@@ -1,0 +1,26 @@
+[package]
+name = "calamo-ffi"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "calamo_ffi"
+# staticlib feeds the XCFramework; lib keeps `cargo test` and downstream
+# crates working.
+crate-type = ["staticlib", "lib"]
+
+# Generates the Swift bindings from the built staticlib (library mode).
+# `uniffi_bindgen_swift()` sits behind uniffi's `cli` feature in 0.32.
+[[bin]]
+name = "uniffi-bindgen-swift"
+path = "src/bin/uniffi-bindgen-swift.rs"
+required-features = ["bindgen-swift"]
+
+[dependencies]
+calamo-core = { workspace = true }
+calamo-adapters = { workspace = true }
+uniffi = { workspace = true }
+
+[features]
+default = []
+bindgen-swift = ["uniffi/cli"]
