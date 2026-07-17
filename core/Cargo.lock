@@ -104,6 +104,9 @@ dependencies = [
 [[package]]
 name = "calamo-core"
 version = "0.1.0"
+dependencies = [
+ "strsim",
+]
 
 [[package]]
 name = "calamo-ffi"
