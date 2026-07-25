@@ -64,7 +64,9 @@ impl core_ports::InsertionPort for InsertionBridge {
             .insert(text.as_str().to_string())
             .map_err(|e| match e {
                 InsertionError::SecureField => core_ports::InsertionError::SecureField,
-                InsertionError::Failed { message } => core_ports::InsertionError::Failed { message },
+                InsertionError::Failed { message } => {
+                    core_ports::InsertionError::Failed { message }
+                }
             })
     }
 }

@@ -14,8 +14,12 @@ pub enum DictationState {
     Inserting,
     /// Degraded — cleanup failed, the enforced verbatim was inserted — is
     /// still Completed, never Failed.
-    Completed { degraded: bool },
-    Failed { reason: FailureReason },
+    Completed {
+        degraded: bool,
+    },
+    Failed {
+        reason: FailureReason,
+    },
 }
 
 /// Every way a Dictation can end without inserting — never a silent failure.

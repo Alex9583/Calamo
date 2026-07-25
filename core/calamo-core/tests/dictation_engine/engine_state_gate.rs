@@ -77,8 +77,8 @@ fn given_models_arrived_when_the_engine_loads_again_then_a_press_is_refused_as_l
 }
 
 #[test]
-fn given_a_refused_press_when_audio_is_pushed_anyway_then_no_ghost_audio_haunts_the_next_dictation(
-) {
+fn given_a_refused_press_when_audio_is_pushed_anyway_then_no_ghost_audio_haunts_the_next_dictation()
+{
     // Given: a press refused while loading, with audio frames racing behind
     let harness = Harness::loading();
     harness.engine.hotkey_pressed();

@@ -3,5 +3,25 @@ name = "calamo-adapters"
 version.workspace = true
 edition.workspace = true
 
+[features]
+# Real CleanupPort adapter (macOS/Metal only). Off by default so the
+# portable default-features CI build never compiles llama.cpp.
+llama-cleanup = ["dep:llama-cpp-2", "dep:sha2"]
+
 [dependencies]
 calamo-core = { workspace = true }
+sha2 = { workspace = true, optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+llama-cpp-2 = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Runs only on the calibrated reference machine (real model + private corpus);
+# the always-on cleanup_vectors_guard test keeps the vectors file honest in CI.
+[[test]]
+name = "cleanup_contract"
+required-features = ["llama-cleanup"]

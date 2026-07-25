@@ -19,6 +19,9 @@
 # Private audio corpus
 /fixtures/audio/
 
+# Local model files (GGUF…), pinned by SHA-256 in code
+/fixtures/models/
+
 # AI workflow
 /.claude/
 /.agents/

@@ -58,7 +58,10 @@ fn given_a_dictionary_when_a_dictation_is_spoken_then_its_views_feed_every_stage
     // Then: S1 — the boost list reaches transcription
     let transcription_calls = harness.transcription.calls();
     assert_eq!(transcription_calls[0].boost_list.len(), 1);
-    assert_eq!(transcription_calls[0].boost_list[0].canonical_text(), "GitHub");
+    assert_eq!(
+        transcription_calls[0].boost_list[0].canonical_text(),
+        "GitHub"
+    );
 
     // S2 — the prompt glossary reaches cleanup
     assert_eq!(harness.cleanup.calls()[0].glossary, ["GitHub"]);

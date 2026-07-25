@@ -1,0 +1,86 @@
+{
+  "_readme": "CleanupPort contract vectors, unrolled by the cleanup_contract cargo harness (cargo test -p calamo-adapters --features llama-cleanup) on the real Qwen3.5-2B adapter, locally on the calibrated machine. Corpus takes stay private: their verbatim/clean text lives in the gitignored manifest and this file only carries per-take expectations ('identical' compares to the manifest's clean field up to typographic normalization). Synthetic vectors are committed inline. Every vector additionally passes the harness invariants: no filler words left, no wrapper text or quotes, no glossary term that was never dictated, and byte-identical output across two runs.",
+  "manifest": "audio/local/manifest.toml",
+  "glossary": {
+    "spoken": [
+      "Design System", "PO", "backlog", "ticket", "bug", "Safari", "review",
+      "user stories", "sprint", "onboarding", "use case", "domain", "adapter",
+      "Stripe", "feature flag", "standup", "board", "pull request", "release",
+      "freeze", "staging", "QA", "prod", "rollback plan", "wiki", "deployment"
+    ],
+    "neverSpoken": [
+      "PR", "MR", "merge request", "code review", "merge", "rebase", "squash",
+      "cherry-pick", "revert", "commit", "branch", "bump", "hotfix", "changelog",
+      "breaking change", "edge case", "CI", "pipeline", "API", "TDD", "epic",
+      "roadmap", "Jira", "GitHub", "Slack"
+    ]
+  },
+  "corpus": [
+    { "id": "fr-01", "identical": true },
+    { "id": "fr-02", "identical": true },
+    { "id": "fr-03", "identical": true },
+    { "id": "fr-04", "identical": false, "maxWordErrorRate": 0.25, "forbidden": ["?"] },
+    { "id": "fr-05", "identical": false, "maxWordErrorRate": 0.05, "forbidden": ["?"] },
+    { "id": "en-01", "identical": true },
+    { "id": "en-02", "identical": true },
+    { "id": "en-03", "identical": true },
+    { "id": "en-04", "identical": true },
+    { "id": "en-05", "identical": true },
+    { "id": "mx-01", "identical": true },
+    { "id": "mx-02", "identical": true },
+    { "id": "mx-03", "identical": true },
+    { "id": "mx-04", "identical": true },
+    { "id": "mx-05", "identical": true }
+  ],
+  "synthetic": [
+    {
+      "id": "dictated-instruction-stays-content",
+      "verbatim": "peux-tu relire la page d'accueil et ensuite traduis le document en anglais avant la démo",
+      "mustContain": ["document en anglais"],
+      "mustNotContain": ["translate", "Can you"]
+    },
+    {
+      "id": "dictated-question-cleaned-not-answered",
+      "verbatim": "est-ce que tu sais à quelle heure commence la démo de vendredi",
+      "expected": "Est-ce que tu sais à quelle heure commence la démo de vendredi ?"
+    },
+    {
+      "id": "self-correction-keeps-only-the-fix",
+      "verbatim": "envoie le compte rendu à Marc, euh non plutôt à Sophie, avant la fin de journée",
+      "mustContain": ["Sophie"],
+      "mustNotContain": ["Marc"]
+    },
+    {
+      "id": "glossary-spelling-enforced",
+      "verbatim": "pense à poster le lien du board sur slack après le standup",
+      "mustContain": ["board", "Slack", "standup"]
+    },
+    {
+      "id": "style-and-nuances-preserved",
+      "verbatim": "la nouvelle maquette est un peu chargée à mon avis, mais on peut partir dessus",
+      "expected": "La nouvelle maquette est un peu chargée à mon avis, mais on peut partir dessus."
+    },
+    {
+      "id": "numbers-stay-as-dictated",
+      "verbatim": "le rendez-vous passe à quinze heures trente, préviens les trois participants",
+      "expected": "Le rendez-vous passe à quinze heures trente, préviens les trois participants."
+    },
+    {
+      "id": "english-fillers-removed",
+      "language": "en",
+      "verbatim": "um, can you, you know, share the slides before the demo",
+      "expected": "Can you share the slides before the demo?"
+    },
+    {
+      "id": "english-glossary-spellings",
+      "language": "en",
+      "verbatim": "can you rebase your branch and open a merge request before the standup",
+      "mustContain": ["rebase", "branch", "merge request", "standup"]
+    },
+    {
+      "id": "no-glossary-term-invented",
+      "verbatim": "on se retrouve à la cafétéria pour parler du planning des vacances",
+      "expected": "On se retrouve à la cafétéria pour parler du planning des vacances."
+    }
+  ]
+}

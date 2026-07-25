@@ -38,7 +38,10 @@ impl ScriptedTranscription {
     }
 
     pub fn replies_after(&self, gate: &Arc<Gate>, text: &str, language: Language) {
-        self.push(Some(Arc::clone(gate)), Ok(RawTranscript::new(text, language)));
+        self.push(
+            Some(Arc::clone(gate)),
+            Ok(RawTranscript::new(text, language)),
+        );
     }
 
     pub fn fails(&self, message: &str) {
@@ -80,7 +83,10 @@ impl TranscriptionPort for ScriptedTranscription {
                 }
                 reply.result
             }
-            None => Ok(RawTranscript::new("unscripted transcript", Language::English)),
+            None => Ok(RawTranscript::new(
+                "unscripted transcript",
+                Language::English,
+            )),
         }
     }
 }

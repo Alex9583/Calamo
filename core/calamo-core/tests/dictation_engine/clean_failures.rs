@@ -22,7 +22,11 @@ fn given_no_audio_when_the_hotkey_is_released_then_the_dictation_fails_as_empty(
             reason: FailureReason::EmptyDictation
         }
     );
-    assert_eq!(harness.transcription.calls().len(), 0, "nothing to transcribe");
+    assert_eq!(
+        harness.transcription.calls().len(),
+        0,
+        "nothing to transcribe"
+    );
     assert_eq!(harness.insertion.inserted_texts(), [""; 0]);
 }
 
@@ -113,7 +117,11 @@ fn given_the_mic_vanishes_mid_capture_when_reported_then_the_dictation_fails_as_
             }
         ]
     );
-    assert_eq!(harness.transcription.calls().len(), 0, "nothing reaches the pipeline");
+    assert_eq!(
+        harness.transcription.calls().len(),
+        0,
+        "nothing reaches the pipeline"
+    );
 }
 
 #[test]

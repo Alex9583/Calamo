@@ -2,9 +2,7 @@
 //! `DictationObserver` are implemented by the Swift shell across the FFI;
 //! `CleanupPort` and `DictionaryRepository` stay internal to the Rust core.
 
-use crate::dictation::{
-    CleanedText, DictationId, DictationState, RawTranscript, Utterance,
-};
+use crate::dictation::{CleanedText, DictationId, DictationState, RawTranscript, Utterance};
 use crate::dictionary::{Dictionary, DictionaryEntry};
 use crate::engine::{EngineState, RefusalCause};
 
@@ -23,8 +21,7 @@ pub struct TranscriptionError {
 
 /// Never fatal on failure: the engine degrades to the verbatim transcript.
 pub trait CleanupPort: Send + Sync {
-    fn clean(&self, transcript: &RawTranscript, glossary: &[&str])
-        -> Result<String, CleanupError>;
+    fn clean(&self, transcript: &RawTranscript, glossary: &[&str]) -> Result<String, CleanupError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -29,7 +29,9 @@ pub enum UnavailabilityCause {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RefusalCause {
     EngineLoading,
-    EngineUnavailable { cause: UnavailabilityCause },
+    EngineUnavailable {
+        cause: UnavailabilityCause,
+    },
     /// One Dictation processing + one waiting captured: refused, never queued.
     PipelineBusy,
 }
@@ -279,4 +281,3 @@ impl Shared {
         }
     }
 }
-

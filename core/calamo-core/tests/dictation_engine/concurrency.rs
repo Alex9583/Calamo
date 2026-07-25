@@ -9,9 +9,9 @@ use calamo_core::engine::RefusalCause;
 /// Waits until the gated transcription call has started.
 fn wait_transcribing(harness: &Harness, id: DictationId) {
     harness.observer.wait_until("transcribing", |events| {
-        events
-            .iter()
-            .any(|e| matches!(e, Observed::Dictation(seen, DictationState::Transcribing) if *seen == id))
+        events.iter().any(
+            |e| matches!(e, Observed::Dictation(seen, DictationState::Transcribing) if *seen == id),
+        )
     });
 }
 

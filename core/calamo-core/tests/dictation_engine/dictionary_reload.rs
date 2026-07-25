@@ -34,7 +34,9 @@ fn given_an_edited_dictionary_when_reloaded_then_the_next_dictation_uses_it() {
 fn given_an_invalid_dictionary_file_when_reloaded_then_the_previous_dictionary_stays_active() {
     // Given
     let harness = Harness::ready_with_dictionary(dictionary_of("GitHub"));
-    harness.repository.fails("dictionary.toml: line 3: expected `]`");
+    harness
+        .repository
+        .fails("dictionary.toml: line 3: expected `]`");
 
     // When
     harness.engine.reload_dictionary();
