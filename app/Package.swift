@@ -18,17 +18,11 @@ let package = Package(
                 "CalamoInsertion",
                 "CalamoTranscription",
             ],
-            path: "Sources/Calamo",
-            // Swift 6 strict concurrency is unassessed against the
-            // UniFFI-generated code — language mode 5 until it is.
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            path: "Sources/Calamo"
         ),
         .target(
             name: "CalamoInput",
-            path: "Sources/CalamoInput",
-            // Queue-confined classes await the strict-concurrency audit
-            // (spec risk #3, J2) — mode 5 until then.
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            path: "Sources/CalamoInput"
         ),
         .target(
             name: "CalamoInsertion",

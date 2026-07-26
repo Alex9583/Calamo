@@ -2,7 +2,10 @@ import Foundation
 
 /// Wires tap → machine → capture → sink. Tap callbacks stay instant: the
 /// decision is pure, side effects run on a serial queue.
-public final class PushToTalkInput {
+///
+/// @unchecked: `machine` and `tap` are main-run-loop confined (start + tap
+/// callbacks), `capture` is confined to the serial queue.
+public final class PushToTalkInput: @unchecked Sendable {
     private let sink: DictationInputSink
     private let queue = DispatchQueue(label: "com.calamo.push-to-talk")
     private var machine = PushToTalkMachine()

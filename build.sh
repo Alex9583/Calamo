@@ -18,7 +18,8 @@ STATICLIB="$CORE/target/$TARGET/release/libcalamo_ffi.a"
 export MACOSX_DEPLOYMENT_TARGET=14.0
 
 echo "== 1/5 cargo build --release ($TARGET, staticlib) =="
-cargo build --manifest-path "$CORE/Cargo.toml" -p calamo-ffi --release --target "$TARGET"
+cargo build --manifest-path "$CORE/Cargo.toml" -p calamo-ffi --release --target "$TARGET" \
+  --features llama-cleanup
 ls -lh "$STATICLIB"
 
 echo "== 2/5 uniffi-bindgen-swift (library mode on the .a) =="

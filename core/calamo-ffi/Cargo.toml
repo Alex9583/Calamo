@@ -23,4 +23,7 @@ uniffi = { workspace = true }
 
 [features]
 default = []
+# Real CleanupPort adapter (macOS/Metal only) — build.sh turns it on; the
+# portable default-features build never compiles llama.cpp.
+llama-cleanup = ["calamo-adapters/llama-cleanup"]
 bindgen-swift = ["uniffi/cli"]

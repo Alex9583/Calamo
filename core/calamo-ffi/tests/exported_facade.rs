@@ -1,5 +1,6 @@
 //! Through the exported facade with Rust-implemented foreign ports — the
-//! surface Swift consumes. Placeholder internals: every dictation degrades.
+//! surface Swift consumes. Cleanup is never loaded here: every dictation
+//! degrades.
 
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
@@ -76,9 +77,13 @@ impl DictationObserver for TerminalObserver {
     fn engine_state_changed(&self, _state: EngineState) {}
 }
 
-#[test]
-fn a_dictation_travels_the_exported_facade_and_completes_degraded_without_the_cleanup_adapter() {
-    // Given
+struct Harness {
+    insertion: Arc<FakeInsertion>,
+    observer: Arc<TerminalObserver>,
+    engine: Arc<DictationEngine>,
+}
+
+fn ready_engine(cleanup_model_path: &str) -> Harness {
     let insertion = Arc::new(FakeInsertion::default());
     let observer = Arc::new(TerminalObserver::default());
     let engine = DictationEngine::new(
@@ -87,23 +92,60 @@ fn a_dictation_travels_the_exported_facade_and_completes_degraded_without_the_cl
         Arc::clone(&observer) as Arc<dyn DictationObserver>,
         EngineConfig {
             dictionary_path: "unused-until-ticket-12".to_string(),
-            cleanup_model_path: "unused-until-ticket-07".to_string(),
+            cleanup_model_path: cleanup_model_path.to_string(),
         },
     );
     engine.mark_ready();
+    Harness {
+        insertion,
+        observer,
+        engine,
+    }
+}
+
+impl Harness {
+    fn dictate(&self) {
+        self.engine.hotkey_pressed();
+        self.engine.push_audio(vec![0.1, -0.2, 0.3]);
+        self.engine.hotkey_released();
+    }
+
+    fn assert_completed_degraded_with_verbatim(&self) {
+        assert_eq!(
+            self.observer.wait_terminal(),
+            DictationState::Completed { degraded: true }
+        );
+        assert_eq!(
+            self.insertion.texts.lock().unwrap().clone(),
+            ["pousse la branche sur github"]
+        );
+    }
+}
+
+#[test]
+fn given_cleanup_never_loaded_when_a_dictation_travels_the_exported_facade_then_it_completes_degraded_with_the_verbatim(
+) {
+    // Given
+    let harness = ready_engine("never-loaded.gguf");
 
     // When
-    engine.hotkey_pressed();
-    engine.push_audio(vec![0.1, -0.2, 0.3]);
-    engine.hotkey_released();
+    harness.dictate();
 
-    // Then: degraded — the placeholder cleanup is unavailable by design
-    assert_eq!(
-        observer.wait_terminal(),
-        DictationState::Completed { degraded: true }
-    );
-    assert_eq!(
-        insertion.texts.lock().unwrap().clone(),
-        ["pousse la branche sur github"]
-    );
+    // Then: degraded — the cleanup slot is empty by design
+    harness.assert_completed_degraded_with_verbatim();
+}
+
+#[test]
+fn given_a_bogus_cleanup_model_path_when_load_cleanup_fails_and_a_dictation_runs_then_it_still_completes_degraded(
+) {
+    // Given
+    let harness = ready_engine("/nonexistent/model.gguf");
+
+    // When: the load fails and a dictation runs anyway
+    let loaded = harness.engine.load_cleanup();
+    harness.dictate();
+
+    // Then: never fatal — the verbatim transcript still lands
+    assert!(loaded.is_err());
+    harness.assert_completed_degraded_with_verbatim();
 }

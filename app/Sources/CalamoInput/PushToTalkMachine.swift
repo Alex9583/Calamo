@@ -1,16 +1,16 @@
-public enum HotkeyEvent: Equatable {
+public enum HotkeyEvent: Equatable, Sendable {
     case fnChanged(isDown: Bool)
     case otherKey
     case tapDisabled
 }
 
-public enum HotkeyAction: Equatable {
+public enum HotkeyAction: Equatable, Sendable {
     case beginDictation
     case endDictation
     case reenableTap
 }
 
-public struct HotkeyReaction: Equatable {
+public struct HotkeyReaction: Equatable, Sendable {
     public static let passthrough = HotkeyReaction(actions: [], swallowsEvent: false)
 
     public let actions: [HotkeyAction]
@@ -23,7 +23,7 @@ public struct HotkeyReaction: Equatable {
 }
 
 /// Pure press-and-hold decisions; the tap glue owns the OS side effects.
-public struct PushToTalkMachine {
+public struct PushToTalkMachine: Sendable {
     private var isHolding = false
 
     public init() {}

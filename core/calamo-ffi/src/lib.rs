@@ -5,13 +5,14 @@
 // whatever this crate is called.
 uniffi::setup_scaffolding!("calamo");
 
+mod cleanup;
 mod convert;
 mod errors;
 mod facade;
 mod ports;
 mod types;
 
-pub use errors::{InsertionError, TranscriptionError};
+pub use errors::{CleanupLoadError, InsertionError, TranscriptionError};
 pub use facade::DictationEngine;
 pub use ports::{DictationObserver, InsertionPort, TranscriptionPort};
 pub use types::*;

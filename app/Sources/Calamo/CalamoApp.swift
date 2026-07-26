@@ -1,19 +1,11 @@
-// Menu bar shell around the DictationEngine facade. Push-to-talk input and
-// insertion are live; transcription stays inert — and the engine Loading —
-// until ticket 10 wires the FluidAudio adapter.
+// Menu bar shell around the DictationEngine facade, all adapters live: the
+// models load in the background while the engine gates dictation on Ready.
 import AVFoundation
 import AppKit
 import CalamoCore
 import CalamoInput
 import CalamoInsertion
 import SwiftUI
-
-/// Fails every transcription until ticket 10 wires the FluidAudio adapter.
-final class TranscriptionNotWired: TranscriptionPort, @unchecked Sendable {
-    func transcribe(samples: [Float], boostList: [BoostEntry]) throws -> RawTranscript {
-        throw TranscriptionError.Failed(message: "transcription adapter not wired yet (ticket 10)")
-    }
-}
 
 /// Relays engine state to the menu bar; other events get their UI at ticket 14.
 final class EngineStateModel: ObservableObject, DictationObserver, @unchecked Sendable {
@@ -41,33 +33,49 @@ struct CalamoApp: App {
     @StateObject private var engineState: EngineStateModel
 
     init() {
+        let trace = PipelineTrace.fromEnvironment
         let model = EngineStateModel()
+        let observer =
+            trace.map { TracingObserver(wrapping: model, trace: $0) as DictationObserver } ?? model
+        let transcription = DeferredTranscription()
         engine = DictationEngine(
-            transcription: TranscriptionNotWired(),
+            transcription: transcription,
             insertion: SimulatedPasteInsertion(),
-            observer: model,
-            // Consumed by the core's internal adapters at tickets 10/12.
-            config: EngineConfig(dictionaryPath: "", cleanupModelPath: "")
+            observer: observer,
+            config: EngineConfig(
+                // Consumed by the dictionary.toml repository at ticket 12.
+                dictionaryPath: "",
+                cleanupModelPath: ModelLoader.cleanupModelPath()
+            )
         )
         _engineState = StateObject(wrappedValue: model)
-        input = PushToTalkInput(sink: Self.makeSink(engine: engine))
+        input = PushToTalkInput(sink: Self.makeSink(engine: engine, trace: trace))
         Self.requestPermissions()
         if !input.start() {
             NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
         }
+        ModelLoader.start(engine: engine, transcription: transcription)
     }
 
-    private static func makeSink(engine: DictationEngine) -> DictationInputSink {
-        let sink = EngineInputSink(engine: engine)
-        return ProcessInfo.processInfo.environment["CALAMO_INPUT_DEMO"] == "1"
-            ? InstrumentedInputSink(wrapping: sink) : sink
+    private static func makeSink(engine: DictationEngine, trace: PipelineTrace?)
+        -> DictationInputSink
+    {
+        var sink: DictationInputSink = EngineInputSink(engine: engine)
+        if let trace {
+            sink = TracingInputSink(wrapping: sink, trace: trace)
+        }
+        if ProcessInfo.processInfo.environment["CALAMO_INPUT_DEMO"] == "1" {
+            sink = InstrumentedInputSink(wrapping: sink)
+        }
+        return sink
     }
 
     // Interim flow until onboarding (ticket 20) walks the user through TCC.
     private static func requestPermissions() {
         AVCaptureDevice.requestAccess(for: .audio) { _ in }
-        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
+        // kAXTrustedCheckOptionPrompt is a C global `var` Swift 6 rejects;
+        // its literal value is API.
+        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
     }
 
     var body: some Scene {

@@ -19,8 +19,8 @@ let package = Package(
             name: "CalamoCore",
             dependencies: ["CalamoFFI"],
             path: "Sources/CalamoCore",
-            // Swift 6 strict concurrency is unassessed against the
-            // UniFFI-generated code — language mode 5 until it is.
+            // Generated sources stay in mode 5; the app targets compile in
+            // Swift 6 against their Sendable-annotated interface (J2 audit).
             swiftSettings: [.swiftLanguageMode(.v5)],
             // llama.cpp will be linked statically inside the staticlib; its
             // link directives don't propagate to the Swift executable's

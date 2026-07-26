@@ -55,6 +55,10 @@ pub(super) fn run(gguf: &Path, ready: &Sender<Result<(), String>>, requests: &Re
         context,
         prefix: None,
     };
+    // Decode the glossary-less prefix now, overlapping the shell's ASR load:
+    // the first dictation then only pays the snapshot restore. A failure here
+    // resurfaces on the first clean.
+    let _ = engine.ensure_prefix(&[]);
     while let Ok(request) = requests.recv() {
         let result = engine.clean(&request.transcript, &request.glossary);
         let _ = request.reply.send(result);

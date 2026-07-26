@@ -2,7 +2,8 @@
 
 Behavioral tests read given → when → then, in both harnesses.
 
-- Names carry the full scenario — snake_case in Rust, camelCase in Swift.
+- Names spell the scenario as given-when-then — `given_x_when_y_then_z` in
+  Rust, `givenXWhenYThenZ` in Swift.
 - Bodies are sectioned by `// Given`, `// When`, `// Then` — the one
   sanctioned structural comment in tests; a clause may carry a short
   qualifier (`// Given: an accidental press`).

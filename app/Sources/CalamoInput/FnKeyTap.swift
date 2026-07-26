@@ -2,6 +2,10 @@ import CoreGraphics
 
 /// The single active event tap. Active — not listen-only — so macOS gates it
 /// behind Accessibility alone, never Input Monitoring (spec risk #5).
+///
+/// Not Sendable on purpose (strict-concurrency audit, J2): creation and
+/// callbacks live on the main run loop; `reenable` may arrive from the
+/// push-to-talk queue but only reads `port`, set once in init.
 public final class FnKeyTap {
     private static let fnKeyCode: Int64 = 63  // kVK_Function
 

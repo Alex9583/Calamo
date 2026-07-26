@@ -1,8 +1,13 @@
-import AVFoundation
+// @preconcurrency: AVAudioPCMBuffer crosses from the input tap into the
+// internal queue; AVFAudio predates Sendable.
+@preconcurrency import AVFoundation
 
 /// AVAudioEngine glue: taps the default input and emits ~100 ms mono 16 kHz
 /// chunks from an internal serial queue.
-public final class AudioCapture {
+///
+/// @unchecked: start/stop share their caller's thread (the push-to-talk
+/// queue); `chunker` and `converter` are confined to the internal queue.
+public final class AudioCapture: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.calamo.audio-capture")
     private var engine: AVAudioEngine?
     private var converter: AudioFormatConverter?
@@ -10,7 +15,7 @@ public final class AudioCapture {
 
     public init() {}
 
-    public func start(onChunk: @escaping ([Float]) -> Void) throws {
+    public func start(onChunk: @escaping @Sendable ([Float]) -> Void) throws {
         try Self.requireMicrophoneAccess()
         let engine = AVAudioEngine()
         let converter = try Self.makeConverter(for: engine.inputNode)
@@ -45,7 +50,7 @@ public final class AudioCapture {
 
     private func installTap(
         on input: AVAudioInputNode, through converter: AudioFormatConverter,
-        onChunk: @escaping ([Float]) -> Void
+        onChunk: @escaping @Sendable ([Float]) -> Void
     ) {
         let format = input.outputFormat(forBus: 0)
         input.installTap(

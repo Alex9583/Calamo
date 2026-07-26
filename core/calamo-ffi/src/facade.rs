@@ -1,33 +1,19 @@
 //! The exported `DictationEngine`, wiring the foreign ports and the core's
-//! internal adapters (placeholders until tickets 07 and 12).
+//! internal adapters (dictionary placeholder until ticket 12).
 
 use std::sync::Arc;
 
-use calamo_core::dictation as core_dictation;
 use calamo_core::dictionary::Dictionary;
 use calamo_core::engine as core_engine;
 use calamo_core::ports as core_ports;
 
+use crate::cleanup::DeferredCleanup;
+use crate::errors::CleanupLoadError;
 use crate::ports::{
     DictationObserver, InsertionBridge, InsertionPort, ObserverBridge, TranscriptionBridge,
     TranscriptionPort,
 };
 use crate::types::{CaptureIncident, EngineConfig, UnavailabilityCause};
-
-/// Until ticket 07 wires llama.cpp: every dictation completes degraded.
-struct CleanupUnavailable;
-
-impl core_ports::CleanupPort for CleanupUnavailable {
-    fn clean(
-        &self,
-        _transcript: &core_dictation::RawTranscript,
-        _glossary: &[&str],
-    ) -> Result<String, core_ports::CleanupError> {
-        Err(core_ports::CleanupError {
-            message: "cleanup adapter not wired yet (ticket 07)".to_string(),
-        })
-    }
-}
 
 /// Until ticket 12 wires dictionary.toml, the dictionary is empty.
 struct EmptyDictionaryRepository;
@@ -41,8 +27,8 @@ impl core_ports::DictionaryRepository for EmptyDictionaryRepository {
 #[derive(uniffi::Object)]
 pub struct DictationEngine {
     inner: core_engine::DictationEngine,
-    /// Held for the internal adapters of tickets 07 and 12.
-    _config: EngineConfig,
+    cleanup: Arc<DeferredCleanup>,
+    config: EngineConfig,
 }
 
 #[uniffi::export]
@@ -54,17 +40,28 @@ impl DictationEngine {
         observer: Arc<dyn DictationObserver>,
         config: EngineConfig,
     ) -> Arc<Self> {
+        let cleanup = Arc::new(DeferredCleanup::new());
         let inner = core_engine::DictationEngine::new(
             Arc::new(TranscriptionBridge(transcription)),
-            Arc::new(CleanupUnavailable),
+            Arc::clone(&cleanup) as Arc<dyn core_ports::CleanupPort>,
             Arc::new(InsertionBridge(insertion)),
             Arc::new(ObserverBridge(observer)),
             Arc::new(EmptyDictionaryRepository),
         );
         Arc::new(Self {
             inner,
-            _config: config,
+            cleanup,
+            config,
         })
+    }
+
+    /// Blocks while the pinned GGUF loads onto Metal — call it off the main
+    /// thread, before `mark_ready`. On failure the engine stays usable:
+    /// every dictation completes degraded.
+    pub fn load_cleanup(&self) -> Result<(), CleanupLoadError> {
+        self.cleanup
+            .load(&self.config.cleanup_model_path)
+            .map_err(|message| CleanupLoadError::Failed { message })
     }
 
     pub fn hotkey_pressed(&self) {

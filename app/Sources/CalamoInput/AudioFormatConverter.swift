@@ -1,8 +1,13 @@
-import AVFoundation
+// @preconcurrency: AVAudioConverter's input block is @Sendable in the SDK
+// yet runs synchronously inside convert(to:error:).
+@preconcurrency import AVFoundation
 
 /// Tap buffers → the pipeline's mono 16 kHz f32. One instance per capture:
 /// the resampler carries priming state across consecutive buffers.
-public final class AudioFormatConverter {
+///
+/// @unchecked: handed to the capture queue when the tap installs, confined
+/// to it from then on (convert per buffer, drain at stop).
+public final class AudioFormatConverter: @unchecked Sendable {
     public static let targetSampleRate: Double = 16_000
 
     private let monoInputFormat: AVAudioFormat
@@ -66,7 +71,8 @@ public final class AudioFormatConverter {
         let capacity = AVAudioFrameCount(Double(mono.frameLength) * ratio) + 64
         guard let output = AVAudioPCMBuffer(pcmFormat: converter.outputFormat, frameCapacity: capacity)
         else { return [] }
-        var consumed = false
+        // nonisolated(unsafe): only the synchronous input block touches it.
+        nonisolated(unsafe) var consumed = false
         var conversionError: NSError?
         let status = converter.convert(to: output, error: &conversionError) { _, inputStatus in
             inputStatus.pointee = consumed ? .noDataNow : .haveData

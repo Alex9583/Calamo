@@ -27,6 +27,21 @@ impl From<uniffi::UnexpectedUniFFICallbackError> for TranscriptionError {
 }
 
 #[derive(Debug, Clone, PartialEq, uniffi::Error)]
+pub enum CleanupLoadError {
+    Failed { message: String },
+}
+
+impl fmt::Display for CleanupLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Failed { message } => write!(f, "cleanup load failed: {message}"),
+        }
+    }
+}
+
+impl std::error::Error for CleanupLoadError {}
+
+#[derive(Debug, Clone, PartialEq, uniffi::Error)]
 pub enum InsertionError {
     SecureField,
     Failed { message: String },
