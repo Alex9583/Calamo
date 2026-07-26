@@ -14,11 +14,19 @@ let package = Package(
             name: "Calamo",
             dependencies: [
                 .product(name: "CalamoCore", package: "CalamoCore"),
+                "CalamoInput",
                 "CalamoTranscription",
             ],
             path: "Sources/Calamo",
             // Swift 6 strict concurrency is unassessed against the
             // UniFFI-generated code — language mode 5 until it is.
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .target(
+            name: "CalamoInput",
+            path: "Sources/CalamoInput",
+            // Queue-confined classes await the strict-concurrency audit
+            // (spec risk #3, J2) — mode 5 until then.
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(
@@ -36,6 +44,12 @@ let package = Package(
                 .product(name: "CalamoCore", package: "CalamoCore")
             ],
             path: "Tests/CalamoTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "CalamoInputTests",
+            dependencies: ["CalamoInput"],
+            path: "Tests/CalamoInputTests",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(

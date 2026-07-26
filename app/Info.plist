@@ -25,6 +25,8 @@
 	<!-- Menu bar app: no Dock icon, no app menu. -->
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Calamo captures your voice while you hold the dictation key.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

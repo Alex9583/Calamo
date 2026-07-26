@@ -1,13 +1,16 @@
-// Menu bar shell around the DictationEngine facade. Real adapters land with
-// tickets 06/08/09; until then the ports are inert and the engine stays Loading.
+// Menu bar shell around the DictationEngine facade. Push-to-talk input is
+// live; the remaining ports stay inert — and the engine Loading — until
+// tickets 09 (insertion) and 10 (transcription wiring) take over.
+import AVFoundation
 import AppKit
 import CalamoCore
+import CalamoInput
 import SwiftUI
 
-/// Fails every transcription until ticket 06 wires FluidAudio.
+/// Fails every transcription until ticket 10 wires the FluidAudio adapter.
 final class TranscriptionNotWired: TranscriptionPort, @unchecked Sendable {
     func transcribe(samples: [Float], boostList: [BoostEntry]) throws -> RawTranscript {
-        throw TranscriptionError.Failed(message: "transcription adapter not wired yet (ticket 06)")
+        throw TranscriptionError.Failed(message: "transcription adapter not wired yet (ticket 10)")
     }
 }
 
@@ -40,6 +43,7 @@ final class EngineStateModel: ObservableObject, DictationObserver, @unchecked Se
 @main
 struct CalamoApp: App {
     private let engine: DictationEngine
+    private let input: PushToTalkInput
     @StateObject private var engineState: EngineStateModel
 
     init() {
@@ -48,10 +52,28 @@ struct CalamoApp: App {
             transcription: TranscriptionNotWired(),
             insertion: InsertionNotWired(),
             observer: model,
-            // Consumed by the core's internal adapters at tickets 07/12.
+            // Consumed by the core's internal adapters at tickets 10/12.
             config: EngineConfig(dictionaryPath: "", cleanupModelPath: "")
         )
         _engineState = StateObject(wrappedValue: model)
+        input = PushToTalkInput(sink: Self.makeSink(engine: engine))
+        Self.requestPermissions()
+        if !input.start() {
+            NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
+        }
+    }
+
+    private static func makeSink(engine: DictationEngine) -> DictationInputSink {
+        let sink = EngineInputSink(engine: engine)
+        return ProcessInfo.processInfo.environment["CALAMO_INPUT_DEMO"] == "1"
+            ? InstrumentedInputSink(wrapping: sink) : sink
+    }
+
+    // Interim flow until onboarding (ticket 20) walks the user through TCC.
+    private static func requestPermissions() {
+        AVCaptureDevice.requestAccess(for: .audio) { _ in }
+        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
     }
 
     var body: some Scene {
