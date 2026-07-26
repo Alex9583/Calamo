@@ -1,23 +1,17 @@
-// Menu bar shell around the DictationEngine facade. Push-to-talk input is
-// live; the remaining ports stay inert — and the engine Loading — until
-// tickets 09 (insertion) and 10 (transcription wiring) take over.
+// Menu bar shell around the DictationEngine facade. Push-to-talk input and
+// insertion are live; transcription stays inert — and the engine Loading —
+// until ticket 10 wires the FluidAudio adapter.
 import AVFoundation
 import AppKit
 import CalamoCore
 import CalamoInput
+import CalamoInsertion
 import SwiftUI
 
 /// Fails every transcription until ticket 10 wires the FluidAudio adapter.
 final class TranscriptionNotWired: TranscriptionPort, @unchecked Sendable {
     func transcribe(samples: [Float], boostList: [BoostEntry]) throws -> RawTranscript {
         throw TranscriptionError.Failed(message: "transcription adapter not wired yet (ticket 10)")
-    }
-}
-
-/// Fails every insertion until ticket 09 wires the simulated paste.
-final class InsertionNotWired: InsertionPort, @unchecked Sendable {
-    func insert(text: String) throws {
-        throw InsertionError.Failed(message: "insertion adapter not wired yet (ticket 09)")
     }
 }
 
@@ -50,7 +44,7 @@ struct CalamoApp: App {
         let model = EngineStateModel()
         engine = DictationEngine(
             transcription: TranscriptionNotWired(),
-            insertion: InsertionNotWired(),
+            insertion: SimulatedPasteInsertion(),
             observer: model,
             // Consumed by the core's internal adapters at tickets 10/12.
             config: EngineConfig(dictionaryPath: "", cleanupModelPath: "")

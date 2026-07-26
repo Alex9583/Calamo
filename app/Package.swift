@@ -15,6 +15,7 @@ let package = Package(
             dependencies: [
                 .product(name: "CalamoCore", package: "CalamoCore"),
                 "CalamoInput",
+                "CalamoInsertion",
                 "CalamoTranscription",
             ],
             path: "Sources/Calamo",
@@ -27,6 +28,14 @@ let package = Package(
             path: "Sources/CalamoInput",
             // Queue-confined classes await the strict-concurrency audit
             // (spec risk #3, J2) — mode 5 until then.
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .target(
+            name: "CalamoInsertion",
+            dependencies: [
+                .product(name: "CalamoCore", package: "CalamoCore")
+            ],
+            path: "Sources/CalamoInsertion",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(
@@ -50,6 +59,15 @@ let package = Package(
             name: "CalamoInputTests",
             dependencies: ["CalamoInput"],
             path: "Tests/CalamoInputTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "CalamoInsertionTests",
+            dependencies: [
+                "CalamoInsertion",
+                .product(name: "CalamoCore", package: "CalamoCore"),
+            ],
+            path: "Tests/CalamoInsertionTests",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(
