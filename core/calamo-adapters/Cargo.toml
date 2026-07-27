@@ -25,3 +25,9 @@ toml = { workspace = true }
 [[test]]
 name = "cleanup_contract"
 required-features = ["llama-cleanup"]
+
+# On-demand golden suite (CALAMO_GOLDEN=1), same calibration constraints;
+# golden_guard keeps its vectors and metrics honest in CI.
+[[test]]
+name = "cleanup_golden"
+required-features = ["llama-cleanup"]

@@ -28,6 +28,7 @@ FFI — the proof the whole chain holds.
 ```sh
 cargo test --manifest-path core/Cargo.toml   # Rust workspace (no I/O, no models)
 swift test --package-path app                # Swift side, through the real FFI (./build.sh first)
+scripts/golden.sh all                        # golden suites, reference machine only — docs/golden-suites.md
 ```
 
 ## CI

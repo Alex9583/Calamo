@@ -73,7 +73,7 @@ pub struct Boosting {
     pub terms_extra: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Fixture {
     pub id: String,
     pub lang: VectorLanguage,

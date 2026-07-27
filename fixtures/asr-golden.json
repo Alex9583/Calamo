@@ -1,0 +1,5 @@
+{
+  "_readme": "ASR golden suite: audio → RawTranscript on the real FluidAudio adapter with the contract's boost list, compared to the private manifest's verbatim references. Takes, expected languages and the boost list come from the transcription contract; this file owns the statistical thresholds, literal and never recomputed. Aggregate WER is the micro-average (summed edit distance / summed reference words) per language group on number/filler-normalized tokens. Hard per-take assertions: exact detected language, zero never-spoken terms. Reference machine only — scripts/golden.sh asr, rules in docs/golden-suites.md.",
+  "contract": "transcription-contract.json",
+  "aggregateWerBudget": { "fr": 0.08, "en": 0.065 }
+}

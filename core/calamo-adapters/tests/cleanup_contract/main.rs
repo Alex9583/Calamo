@@ -9,7 +9,9 @@
 #[path = "../contract_data/mod.rs"]
 #[allow(dead_code)]
 mod contract_data;
-mod support;
+#[path = "../text_metrics/mod.rs"]
+#[allow(dead_code)]
+mod text_metrics;
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -132,7 +134,7 @@ impl Harness {
             failures.extend(differs(&vector.id, &fixture.clean, output));
         }
         if let Some(bound) = vector.max_word_error_rate {
-            let wer = support::word_error_rate(output, &fixture.clean);
+            let wer = text_metrics::word_error_rate(output, &fixture.clean);
             if wer > bound {
                 failures.push(format!(
                     "{}: WER {wer:.3} above the {bound} bound:\n  expected: {}\n  got:      {}",
@@ -163,7 +165,7 @@ impl Harness {
     }
 
     fn breaches(&self, id: &str, verbatim: &str, output: &str) -> Vec<String> {
-        support::invariant_breaches(verbatim, output, &self.glossary)
+        text_metrics::invariant_breaches(verbatim, output, &self.glossary)
             .into_iter()
             .map(|breach| format!("{id}: {breach}"))
             .collect()
@@ -171,7 +173,7 @@ impl Harness {
 }
 
 fn differs(id: &str, expected: &str, output: &str) -> Option<String> {
-    (support::norm_typo(output) != support::norm_typo(expected))
+    (text_metrics::norm_typo(output) != text_metrics::norm_typo(expected))
         .then(|| format!("{id}: output differs:\n  expected: {expected}\n  got:      {output}"))
 }
 

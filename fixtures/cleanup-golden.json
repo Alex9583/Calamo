@@ -1,0 +1,6 @@
+{
+  "_readme": "Cleanup golden suite: verbatim → CleanedText on the real Qwen3.5-2B adapter followed by SpellingEnforcement, compared to the private manifest's clean references — the LLM stage isolated from ASR. Takes and the glossary come from the cleanup contract; this file owns the statistical thresholds, literal and never recomputed. Similarity is normalized Levenshtein on number/filler-normalized characters. Hard per-take assertions: no never-dictated glossary term, exact dictionary spellings. Reference machine only — scripts/golden.sh cleanup, rules in docs/golden-suites.md.",
+  "contract": "cleanup-contract.json",
+  "minSimilarityVsClean": 0.9,
+  "maxTakesBelowSimilarity": 2
+}

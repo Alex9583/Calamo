@@ -1,0 +1,6 @@
+{
+  "_readme": "E2E golden suite: audio → final inserted text through the real DictationEngine chain (FluidAudio transcription, Qwen3.5-2B cleanup, SpellingEnforcement), with the insertion port doubled. Takes, expected languages and the never-spoken terms come from the transcription contract; this file owns the statistical thresholds, literal and never recomputed. Similarity vs the manifest's clean references is normalized Levenshtein on number/filler-normalized characters. Hard per-take assertions: exact language of the final text, zero never-spoken terms, exact dictionary spellings. Reference machine only — scripts/golden.sh e2e, rules in docs/golden-suites.md.",
+  "contract": "transcription-contract.json",
+  "minSimilarityVsClean": 0.9,
+  "maxTakesBelowSimilarity": 2
+}

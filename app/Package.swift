@@ -74,5 +74,15 @@ let package = Package(
             path: "Tests/CalamoTranscriptionTests",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
+        .testTarget(
+            name: "CalamoGoldenTests",
+            dependencies: [
+                "CalamoTranscription",
+                .product(name: "CalamoCore", package: "CalamoCore"),
+                .product(name: "FluidAudio", package: "FluidAudio"),
+            ],
+            path: "Tests/CalamoGoldenTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
     ]
 )
