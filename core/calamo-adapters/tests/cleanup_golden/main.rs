@@ -47,10 +47,27 @@ fn suite_and_takes() -> Option<(Suite, Vec<Fixture>)> {
         eprintln!("SKIP cleanup golden: on-demand only — scripts/golden.sh cleanup");
         return None;
     }
-    let vectors = golden_data::load(&contract_data::fixtures_dir());
     let contract = contract_data::load_contract();
-    let manifest = contract_data::load_manifest(&contract)
+    let takes = corpus_takes(&contract);
+    Some((suite(&contract), takes))
+}
+
+fn corpus_takes(contract: &contract_data::Contract) -> Vec<Fixture> {
+    let manifest = contract_data::load_manifest(contract)
         .expect("golden requested but the private corpus manifest is absent");
+    contract
+        .corpus
+        .iter()
+        .map(|vector| {
+            manifest
+                .fixture(&vector.id)
+                .expect("guard-checked coverage")
+                .clone()
+        })
+        .collect()
+}
+
+fn suite(contract: &contract_data::Contract) -> Suite {
     let gguf = gguf_path();
     assert!(
         gguf.is_file(),
@@ -60,26 +77,12 @@ fn suite_and_takes() -> Option<(Suite, Vec<Fixture>)> {
     let glossary = contract.glossary.terms();
     let dictionary = Dictionary::new(glossary.iter().map(DictionaryEntry::new).collect())
         .expect("contract glossary terms are unique");
-    let takes = contract
-        .corpus
-        .iter()
-        .map(|vector| {
-            manifest
-                .fixture(&vector.id)
-                .expect("guard-checked coverage")
-                .clone()
-        })
-        .collect();
-    let adapter = LlamaCleanup::load(&gguf).expect("loading the pinned model");
-    Some((
-        Suite {
-            adapter,
-            vectors,
-            dictionary,
-            glossary,
-        },
-        takes,
-    ))
+    Suite {
+        adapter: LlamaCleanup::load(&gguf).expect("loading the pinned model"),
+        vectors: golden_data::load(&contract_data::fixtures_dir()),
+        dictionary,
+        glossary,
+    }
 }
 
 fn gguf_path() -> PathBuf {

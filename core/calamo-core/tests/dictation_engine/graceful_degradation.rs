@@ -30,14 +30,17 @@ fn given_a_failing_cleanup_when_a_dictation_is_spoken_then_the_enforced_verbatim
         ["euh pousse sur GitHub"],
         "verbatim inserted, spellings still guaranteed"
     );
-    assert_eq!(
-        harness.observer.states_of(id),
-        [
-            DictationState::Capturing,
-            DictationState::Transcribing,
-            DictationState::Cleaning,
-            DictationState::Inserting,
-            DictationState::Completed { degraded: true },
-        ]
-    );
+    assert_eq!(harness.observer.states_of(id), degraded_trajectory());
+}
+
+/// The full pipeline still runs — degradation changes the payload, never the
+/// states.
+fn degraded_trajectory() -> [DictationState; 5] {
+    [
+        DictationState::Capturing,
+        DictationState::Transcribing,
+        DictationState::Cleaning,
+        DictationState::Inserting,
+        DictationState::Completed { degraded: true },
+    ]
 }

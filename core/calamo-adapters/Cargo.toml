@@ -31,3 +31,6 @@ required-features = ["llama-cleanup"]
 [[test]]
 name = "cleanup_golden"
 required-features = ["llama-cleanup"]
+
+[lints]
+workspace = true

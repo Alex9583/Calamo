@@ -1,0 +1,12 @@
+# Single rule: the mechanical backstop of docs/standards/small-units.md.
+# Everything stylistic stays with swift-format.
+only_rules:
+  - function_body_length
+
+function_body_length:
+  warning: 25
+  error: 45
+
+included:
+  - app/Sources
+  - app/Tests

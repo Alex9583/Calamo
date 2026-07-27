@@ -78,29 +78,29 @@ final class TerminalObserver: DictationObserver, @unchecked Sendable {
     #expect(insertion.insertedTexts == ["pousse la branche sur github"])
 }
 
-@Test func givenALoadingEngineWhenTheHotkeyIsPressedThenTheDictationIsRefusedAsEngineLoading() {
-    final class RefusalObserver: DictationObserver, @unchecked Sendable {
-        private let refused = DispatchSemaphore(value: 0)
-        private let lock = NSLock()
-        private var cause: RefusalCause?
+final class RefusalObserver: DictationObserver, @unchecked Sendable {
+    private let refused = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var cause: RefusalCause?
 
-        func dictationStateChanged(dictation: UInt64, state: DictationState) {}
-        func dictationRefused(cause: RefusalCause) {
-            lock.lock()
-            self.cause = cause
-            lock.unlock()
-            refused.signal()
-        }
-        func engineStateChanged(state: EngineState) {}
-
-        func waitRefusal() -> RefusalCause? {
-            guard refused.wait(timeout: .now() + 2) == .success else { return nil }
-            lock.lock()
-            defer { lock.unlock() }
-            return cause
-        }
+    func dictationStateChanged(dictation: UInt64, state: DictationState) {}
+    func dictationRefused(cause: RefusalCause) {
+        lock.lock()
+        self.cause = cause
+        lock.unlock()
+        refused.signal()
     }
+    func engineStateChanged(state: EngineState) {}
 
+    func waitRefusal() -> RefusalCause? {
+        guard refused.wait(timeout: .now() + 2) == .success else { return nil }
+        lock.lock()
+        defer { lock.unlock() }
+        return cause
+    }
+}
+
+@Test func givenALoadingEngineWhenTheHotkeyIsPressedThenTheDictationIsRefusedAsEngineLoading() {
     // Given
     let observer = RefusalObserver()
     let engine = DictationEngine(

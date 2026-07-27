@@ -23,8 +23,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: core
+      - name: swiftlint
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          swiftlint --strict
       - name: Build chain (cargo → UniFFI → XCFramework → SwiftPM app)
         run: ./build.sh
+      # The macOS-cfg'd adapters (FluidAudio, llama.cpp) only lint here.
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --features calamo-adapters/llama-cleanup --manifest-path core/Cargo.toml -- -D warnings
       # Through the real FFI: catches binding drift the build alone misses.
       - name: swift test
         run: swift test --package-path app
@@ -41,5 +48,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: core
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --manifest-path core/Cargo.toml -- -D warnings
       - name: cargo test
         run: cargo test --workspace --manifest-path core/Cargo.toml

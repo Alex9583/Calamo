@@ -27,3 +27,6 @@ default = []
 # portable default-features build never compiles llama.cpp.
 llama-cleanup = ["calamo-adapters/llama-cleanup"]
 bindgen-swift = ["uniffi/cli"]
+
+[lints]
+workspace = true

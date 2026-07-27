@@ -5,3 +5,6 @@ edition.workspace = true
 
 [dependencies]
 strsim.workspace = true
+
+[lints]
+workspace = true

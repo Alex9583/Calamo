@@ -8,6 +8,10 @@ members = ["calamo-core", "calamo-adapters", "calamo-ffi"]
 version = "0.1.0"
 edition = "2021"
 
+# Mechanical backstop of docs/standards/small-units.md; threshold in clippy.toml.
+[workspace.lints.clippy]
+too_many_lines = "warn"
+
 [workspace.dependencies]
 calamo-core = { path = "calamo-core" }
 calamo-adapters = { path = "calamo-adapters" }

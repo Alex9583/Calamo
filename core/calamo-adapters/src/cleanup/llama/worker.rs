@@ -28,6 +28,7 @@ pub(super) struct Request {
     pub reply: Sender<Result<String, CleanupError>>,
 }
 
+// The context borrows the model: both live on `run`'s stack frame.
 pub(super) fn run(gguf: &Path, ready: &Sender<Result<(), String>>, requests: &Receiver<Request>) {
     let (backend, model) = match load_model(gguf) {
         Ok(loaded) => loaded,
@@ -36,22 +37,37 @@ pub(super) fn run(gguf: &Path, ready: &Sender<Result<(), String>>, requests: &Re
             return;
         }
     };
-    // The context borrows the model: both must live on this stack frame, so
-    // its creation stays here.
-    let context_params = LlamaContextParams::default()
-        .with_n_ctx(NonZeroU32::new(CONTEXT_TOKENS))
-        .with_n_batch(BATCH_TOKENS as u32);
-    let context = match model.new_context(&backend, context_params) {
+    let context = match new_context(&backend, &model) {
         Ok(context) => context,
-        Err(e) => {
-            let _ = ready.send(Err(format!("llama context: {e}")));
+        Err(message) => {
+            let _ = ready.send(Err(message));
             return;
         }
     };
-    let _ = ready.send(Ok(()));
+    serve(&model, context, ready, requests);
+}
 
+fn new_context<'m>(
+    backend: &LlamaBackend,
+    model: &'m LlamaModel,
+) -> Result<LlamaContext<'m>, String> {
+    let params = LlamaContextParams::default()
+        .with_n_ctx(NonZeroU32::new(CONTEXT_TOKENS))
+        .with_n_batch(BATCH_TOKENS as u32);
+    model
+        .new_context(backend, params)
+        .map_err(|e| format!("llama context: {e}"))
+}
+
+fn serve(
+    model: &LlamaModel,
+    context: LlamaContext<'_>,
+    ready: &Sender<Result<(), String>>,
+    requests: &Receiver<Request>,
+) {
+    let _ = ready.send(Ok(()));
     let mut engine = Engine {
-        model: &model,
+        model,
         context,
         prefix: None,
     };

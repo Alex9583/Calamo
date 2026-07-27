@@ -99,23 +99,39 @@ impl Harness {
     fn run_all_vectors(&self) -> (BTreeMap<String, String>, Vec<String>) {
         let mut outputs = BTreeMap::new();
         let mut failures = Vec::new();
-        match &self.manifest {
-            None => eprintln!("SKIP corpus vectors: private corpus manifest absent"),
-            Some(manifest) => {
-                for vector in &self.contract.corpus {
-                    let fixture = manifest
-                        .fixture(&vector.id)
-                        .expect("guard-checked coverage");
-                    match self.clean_twice(&vector.id, &fixture.verbatim, fixture.lang) {
-                        Err(failure) => failures.push(failure),
-                        Ok(output) => {
-                            failures.extend(self.check_corpus(vector, fixture, &output));
-                            outputs.insert(vector.id.clone(), output);
-                        }
-                    }
+        self.run_corpus_vectors(&mut outputs, &mut failures);
+        self.run_synthetic_vectors(&mut outputs, &mut failures);
+        (outputs, failures)
+    }
+
+    fn run_corpus_vectors(
+        &self,
+        outputs: &mut BTreeMap<String, String>,
+        failures: &mut Vec<String>,
+    ) {
+        let Some(manifest) = &self.manifest else {
+            eprintln!("SKIP corpus vectors: private corpus manifest absent");
+            return;
+        };
+        for vector in &self.contract.corpus {
+            let fixture = manifest
+                .fixture(&vector.id)
+                .expect("guard-checked coverage");
+            match self.clean_twice(&vector.id, &fixture.verbatim, fixture.lang) {
+                Err(failure) => failures.push(failure),
+                Ok(output) => {
+                    failures.extend(self.check_corpus(vector, fixture, &output));
+                    outputs.insert(vector.id.clone(), output);
                 }
             }
         }
+    }
+
+    fn run_synthetic_vectors(
+        &self,
+        outputs: &mut BTreeMap<String, String>,
+        failures: &mut Vec<String>,
+    ) {
         for vector in &self.contract.synthetic {
             match self.clean_twice(&vector.id, &vector.verbatim, vector.language) {
                 Err(failure) => failures.push(failure),
@@ -125,7 +141,6 @@ impl Harness {
                 }
             }
         }
-        (outputs, failures)
     }
 
     fn check_corpus(&self, vector: &CorpusVector, fixture: &Fixture, output: &str) -> Vec<String> {

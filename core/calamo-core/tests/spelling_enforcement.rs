@@ -218,18 +218,21 @@ mod pass_through {
 mod at_scale {
     use super::*;
 
-    #[test]
-    fn given_500_entries_when_enforcing_then_every_entry_is_covered_without_notable_degradation() {
-        // Given
-        let entries: Vec<DictionaryEntry> = (0..500)
+    fn five_hundred_aliased_entries() -> Vec<DictionaryEntry> {
+        (0..500)
             .map(|i| {
                 DictionaryEntry::with_aliases(
                     format!("Codename{i:03}"),
                     [format!("code name {i:03}")],
                 )
             })
-            .collect();
-        let dict = dictionary(entries);
+            .collect()
+    }
+
+    #[test]
+    fn given_500_entries_when_enforcing_then_every_entry_is_covered_without_notable_degradation() {
+        // Given
+        let dict = dictionary(five_hundred_aliased_entries());
         let text = "on migre codename007 vers codename250 dès que code name 499 est prêt, \
                     puis on répartit le reste des services sur les clusters de secours \
                     avant la revue de mardi matin avec toute l'équipe plateforme et les \
