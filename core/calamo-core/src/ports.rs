@@ -50,7 +50,9 @@ pub trait DictionaryRepository: Send + Sync {
     fn load(&self) -> Result<Dictionary, DictionaryLoadError>;
 }
 
+/// Carried up to the shell's notification: the user fixes the file by line.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DictionaryLoadError {
+    pub line: Option<u32>,
     pub message: String,
 }

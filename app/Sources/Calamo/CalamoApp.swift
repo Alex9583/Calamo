@@ -30,6 +30,7 @@ final class EngineStateModel: ObservableObject, DictationObserver, @unchecked Se
 struct CalamoApp: App {
     private let engine: DictationEngine
     private let input: PushToTalkInput
+    private let dictionaryWatcher: DictionaryWatcher
     @StateObject private var engineState: EngineStateModel
 
     init() {
@@ -43,13 +44,13 @@ struct CalamoApp: App {
             insertion: SimulatedPasteInsertion(),
             observer: observer,
             config: EngineConfig(
-                // Consumed by the dictionary.toml repository at ticket 12.
-                dictionaryPath: "",
+                dictionaryPath: DictionaryFile.url.path,
                 cleanupModelPath: ModelLoader.cleanupModelPath()
             )
         )
         _engineState = StateObject(wrappedValue: model)
         input = PushToTalkInput(sink: Self.makeSink(engine: engine, trace: trace))
+        dictionaryWatcher = DictionaryHotReload.start(engine: engine)
         Self.requestPermissions()
         if !input.start() {
             NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
@@ -81,6 +82,9 @@ struct CalamoApp: App {
     var body: some Scene {
         MenuBarExtra("Calamo", systemImage: "waveform") {
             Text(engineState.statusLabel)
+            Button("Dictionary…") {
+                DictionaryFile.open()
+            }
             Divider()
             Button("Quit Calamo") {
                 NSApplication.shared.terminate(nil)

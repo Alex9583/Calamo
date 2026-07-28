@@ -2,11 +2,22 @@
 
 use calamo_core::dictation as core_dictation;
 use calamo_core::engine as core_engine;
+use calamo_core::ports as core_ports;
 
+use crate::errors::DictionaryLoadError;
 use crate::types::{
     CaptureIncident, DictationState, EngineState, FailureReason, Language, RefusalCause,
     UnavailabilityCause,
 };
+
+impl From<core_ports::DictionaryLoadError> for DictionaryLoadError {
+    fn from(error: core_ports::DictionaryLoadError) -> Self {
+        Self::Invalid {
+            line: error.line,
+            message: error.message,
+        }
+    }
+}
 
 impl From<Language> for core_dictation::Language {
     fn from(language: Language) -> Self {

@@ -26,6 +26,30 @@ impl From<uniffi::UnexpectedUniFFICallbackError> for TranscriptionError {
     }
 }
 
+/// The previous dictionary stayed active; line and cause feed the shell's
+/// notification.
+#[derive(Debug, Clone, PartialEq, uniffi::Error)]
+pub enum DictionaryLoadError {
+    Invalid { line: Option<u32>, message: String },
+}
+
+impl fmt::Display for DictionaryLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Invalid {
+                line: Some(line),
+                message,
+            } => write!(f, "invalid dictionary: line {line}: {message}"),
+            Self::Invalid {
+                line: None,
+                message,
+            } => write!(f, "invalid dictionary: {message}"),
+        }
+    }
+}
+
+impl std::error::Error for DictionaryLoadError {}
+
 #[derive(Debug, Clone, PartialEq, uniffi::Error)]
 pub enum CleanupLoadError {
     Failed { message: String },

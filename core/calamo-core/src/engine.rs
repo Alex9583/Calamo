@@ -9,7 +9,8 @@ use std::sync::{Arc, Mutex};
 use crate::dictation::{DictationId, DictationState, FailureReason, Utterance};
 use crate::dictionary::Dictionary;
 use crate::ports::{
-    CleanupPort, DictationObserver, DictionaryRepository, InsertionPort, TranscriptionPort,
+    CleanupPort, DictationObserver, DictionaryLoadError, DictionaryRepository, InsertionPort,
+    TranscriptionPort,
 };
 use pipeline::Job;
 
@@ -143,11 +144,11 @@ impl DictationEngine {
     }
 
     /// On failure the previous dictionary stays active — an invalid file
-    /// never breaks dictation.
-    pub fn reload_dictionary(&self) {
-        if let Ok(dictionary) = self.repository.load() {
-            self.shared.state.lock().unwrap().dictionary = Arc::new(dictionary);
-        }
+    /// never breaks dictation; the error feeds the shell's notification.
+    pub fn reload_dictionary(&self) -> Result<(), DictionaryLoadError> {
+        let dictionary = self.repository.load()?;
+        self.shared.state.lock().unwrap().dictionary = Arc::new(dictionary);
+        Ok(())
     }
 
     /// Fails the capturing Dictation; the release that follows finds no

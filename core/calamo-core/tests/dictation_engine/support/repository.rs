@@ -20,8 +20,9 @@ impl StubRepository {
         *self.result.lock().unwrap() = Ok(dictionary);
     }
 
-    pub fn fails(&self, message: &str) {
+    pub fn fails(&self, line: Option<u32>, message: &str) {
         *self.result.lock().unwrap() = Err(DictionaryLoadError {
+            line,
             message: message.to_string(),
         });
     }

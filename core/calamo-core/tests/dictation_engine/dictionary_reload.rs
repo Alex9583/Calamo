@@ -4,6 +4,7 @@
 use crate::support::Harness;
 use calamo_core::dictation::Language;
 use calamo_core::dictionary::{Dictionary, DictionaryEntry};
+use calamo_core::ports::DictionaryLoadError;
 
 fn dictionary_of(canonical: &str) -> Dictionary {
     Dictionary::new(vec![DictionaryEntry::new(canonical)]).unwrap()
@@ -16,9 +17,10 @@ fn given_an_edited_dictionary_when_reloaded_then_the_next_dictation_uses_it() {
     harness.repository.holds(dictionary_of("Jira"));
 
     // When
-    harness.engine.reload_dictionary();
+    let reloaded = harness.engine.reload_dictionary();
 
     // Then: the next dictation is boosted and enforced by the new dictionary
+    assert_eq!(reloaded, Ok(()));
     harness
         .transcription
         .replies_with("ouvre jira", Language::French);
@@ -34,12 +36,19 @@ fn given_an_edited_dictionary_when_reloaded_then_the_next_dictation_uses_it() {
 fn given_an_invalid_dictionary_file_when_reloaded_then_the_previous_dictionary_stays_active() {
     // Given
     let harness = Harness::ready_with_dictionary(dictionary_of("GitHub"));
-    harness
-        .repository
-        .fails("dictionary.toml: line 3: expected `]`");
+    harness.repository.fails(Some(3), "expected `]`");
 
     // When
-    harness.engine.reload_dictionary();
+    let reloaded = harness.engine.reload_dictionary();
+
+    // Then: the caller gets line and cause for its notification
+    assert_eq!(
+        reloaded,
+        Err(DictionaryLoadError {
+            line: Some(3),
+            message: "expected `]`".to_string(),
+        })
+    );
 
     // Then: dictation still runs with the previous dictionary
     harness

@@ -1,0 +1,79 @@
+{
+  "_readme": "DictionaryRepository contract vectors, unrolled by the dictionary_contract cargo harness on the real dictionary.toml adapter over temp files — fully portable, no models, always on in CI. Each vector's toml lines are joined with newlines; entries pin the parse result in order (order = priority); invalid vectors pin the reported line number and a fragment of the cause. template.entries pins the round-trip of the first-launch file: created by the adapter, parsed back to exactly these examples.",
+  "template": {
+    "entries": [
+      { "text": "GitHub", "aliases": ["github", "git hub"] },
+      { "text": "PR", "aliases": ["péère"] },
+      { "text": "Calamo", "aliases": [] }
+    ]
+  },
+  "valid": [
+    {
+      "id": "order-is-priority-and-aliases-are-optional",
+      "toml": [
+        "entries = [",
+        "    { text = \"GitHub\", aliases = [\"github\", \"git hub\"] },",
+        "    { text = \"PR\" },",
+        "]"
+      ],
+      "entries": [
+        { "text": "GitHub", "aliases": ["github", "git hub"] },
+        { "text": "PR", "aliases": [] }
+      ]
+    },
+    {
+      "id": "empty-file-is-an-empty-dictionary",
+      "toml": [""],
+      "entries": []
+    },
+    {
+      "id": "empty-entries-array-is-an-empty-dictionary",
+      "toml": ["entries = []"],
+      "entries": []
+    }
+  ],
+  "invalid": [
+    {
+      "id": "unclosed-entry",
+      "toml": [
+        "entries = [",
+        "    { text = \"GitHub\"",
+        "]"
+      ],
+      "line": 2,
+      "messageContains": "invalid inline table"
+    },
+    {
+      "id": "entry-missing-its-text",
+      "toml": [
+        "entries = [",
+        "    { aliases = [\"github\"] },",
+        "]"
+      ],
+      "line": 2,
+      "messageContains": "missing field `text`"
+    },
+    {
+      "id": "misspelled-aliases-key",
+      "toml": [
+        "entries = [",
+        "    { text = \"GitHub\", alias = [\"github\"] },",
+        "]"
+      ],
+      "line": 2,
+      "messageContains": "unknown field `alias`"
+    },
+    {
+      "id": "duplicate-canonical-reports-the-second-occurrence",
+      "toml": [
+        "entries = [",
+        "    { text = \"GitHub\" },",
+        "    { text = \"PR\" },",
+        "    { text = \"GitHub\" },",
+        "]"
+      ],
+      "line": 4,
+      "messageContains": "duplicate canonical text: GitHub"
+    }
+  ]
+}
