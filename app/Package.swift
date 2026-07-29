@@ -14,11 +14,19 @@ let package = Package(
             name: "Calamo",
             dependencies: [
                 .product(name: "CalamoCore", package: "CalamoCore"),
+                "CalamoFeedback",
                 "CalamoInput",
                 "CalamoInsertion",
                 "CalamoTranscription",
             ],
             path: "Sources/Calamo"
+        ),
+        .target(
+            name: "CalamoFeedback",
+            dependencies: [
+                .product(name: "CalamoCore", package: "CalamoCore")
+            ],
+            path: "Sources/CalamoFeedback"
         ),
         .target(
             name: "CalamoInput",
@@ -47,6 +55,15 @@ let package = Package(
                 .product(name: "CalamoCore", package: "CalamoCore")
             ],
             path: "Tests/CalamoTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "CalamoFeedbackTests",
+            dependencies: [
+                "CalamoFeedback",
+                .product(name: "CalamoCore", package: "CalamoCore"),
+            ],
+            path: "Tests/CalamoFeedbackTests",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(

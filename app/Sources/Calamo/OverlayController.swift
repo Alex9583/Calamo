@@ -1,0 +1,77 @@
+import AppKit
+import CalamoFeedback
+import SwiftUI
+
+/// Thin renderer of OverlaySteps: shows, dissolves and repositions the pill;
+/// what to show was decided in CalamoFeedback.
+@MainActor
+final class OverlayController {
+    private let panel = OverlayPanel()
+    private let model = OverlayModel()
+    private var dissolve: Timer?
+    /// Bumped on every show/hide so a stale fade-out completion never
+    /// orders out a pill a newer event just showed.
+    private var generation = 0
+
+    init() {
+        let hosting = NSHostingView(rootView: OverlayView(model: model))
+        hosting.frame = NSRect(x: 0, y: 0, width: 420, height: 80)
+        panel.contentView = hosting
+        panel.setContentSize(hosting.frame.size)
+    }
+
+    func apply(_ step: OverlayStep) {
+        dissolve?.invalidate()
+        dissolve = nil
+        guard step.display != .hidden else { return hide() }
+        model.show(step.display)
+        show()
+        if let delay = step.dissolveAfter {
+            scheduleDissolve(after: delay, revertingTo: step.revertsTo)
+        }
+    }
+
+    func push(level: Float) {
+        model.push(level: level)
+    }
+
+    private func scheduleDissolve(after delay: TimeInterval, revertingTo revert: OverlayDisplay?) {
+        dissolve = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+            onMain {
+                if let revert { self.model.show(revert) } else { self.hide() }
+            }
+        }
+    }
+
+    private func show() {
+        generation += 1
+        position()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0
+            panel.animator().alphaValue = 1
+        }
+        panel.orderFrontRegardless()
+    }
+
+    private func hide() {
+        generation += 1
+        let fade = generation
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.15
+            panel.animator().alphaValue = 0
+        } completionHandler: {
+            MainActor.assumeIsolated {
+                guard self.generation == fade else { return }
+                self.panel.orderOut(nil)
+                self.model.show(.hidden)
+            }
+        }
+    }
+
+    private func position() {
+        guard let screen = FocusedScreen.current() else { return }
+        let frame = screen.visibleFrame
+        let size = panel.frame.size
+        panel.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2, y: frame.minY + 24))
+    }
+}

@@ -7,7 +7,8 @@ import CalamoInput
 import CalamoInsertion
 import SwiftUI
 
-/// Relays engine state to the menu bar; other events get their UI at ticket 14.
+/// Relays engine state to the menu bar; dictation events are rendered by
+/// the FeedbackObserver upstream in the chain.
 final class EngineStateModel: ObservableObject, DictationObserver, @unchecked Sendable {
     @Published var statusLabel = "Engine: loading…"
 
@@ -36,8 +37,8 @@ struct CalamoApp: App {
     init() {
         let trace = PipelineTrace.fromEnvironment
         let model = EngineStateModel()
-        let observer =
-            trace.map { TracingObserver(wrapping: model, trace: $0) as DictationObserver } ?? model
+        let overlay = OverlayController()
+        let observer = Self.makeObserver(model: model, overlay: overlay, trace: trace)
         let transcription = DeferredTranscription()
         engine = DictationEngine(
             transcription: transcription,
@@ -49,7 +50,8 @@ struct CalamoApp: App {
             )
         )
         _engineState = StateObject(wrappedValue: model)
-        input = PushToTalkInput(sink: Self.makeSink(engine: engine, trace: trace))
+        input = PushToTalkInput(
+            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
         Self.requestPermissions()
         if !input.start() {
@@ -58,9 +60,17 @@ struct CalamoApp: App {
         ModelLoader.start(engine: engine, transcription: transcription)
     }
 
-    private static func makeSink(engine: DictationEngine, trace: PipelineTrace?)
-        -> DictationInputSink
-    {
+    private static func makeObserver(
+        model: EngineStateModel, overlay: OverlayController, trace: PipelineTrace?
+    ) -> DictationObserver {
+        let feedback = FeedbackObserver(wrapping: model, overlay: overlay)
+        guard let trace else { return feedback }
+        return TracingObserver(wrapping: feedback, trace: trace)
+    }
+
+    private static func makeSink(
+        engine: DictationEngine, overlay: OverlayController, trace: PipelineTrace?
+    ) -> DictationInputSink {
         var sink: DictationInputSink = EngineInputSink(engine: engine)
         if let trace {
             sink = TracingInputSink(wrapping: sink, trace: trace)
@@ -68,7 +78,9 @@ struct CalamoApp: App {
         if ProcessInfo.processInfo.environment["CALAMO_INPUT_DEMO"] == "1" {
             sink = InstrumentedInputSink(wrapping: sink)
         }
-        return sink
+        return LevelMeteringInputSink(wrapping: sink) { level in
+            onMain { overlay.push(level: level) }
+        }
     }
 
     // Interim flow until onboarding (ticket 20) walks the user through TCC.

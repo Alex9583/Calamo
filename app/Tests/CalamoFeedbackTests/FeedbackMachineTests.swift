@@ -1,0 +1,154 @@
+// Pins the event → overlay/sound mapping the AppKit glue renders verbatim.
+import CalamoCore
+import CalamoFeedback
+import Testing
+
+@Test func givenAnIdleMachineWhenCaptureBeginsThenTheWaveformShowsAndTheStartSoundPlays() {
+    // Given
+    var machine = FeedbackMachine()
+
+    // When
+    let reaction = machine.handle(.capturing)
+
+    // Then
+    #expect(reaction == FeedbackReaction(step: OverlayStep(display: .waveform), sound: .captureStart))
+}
+
+@Test func givenACapturingDictationWhenTranscriptionBeginsThenTheWaitShowsAndTheEndSoundPlays() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+
+    // When
+    let reaction = machine.handle(.transcribing)
+
+    // Then
+    #expect(reaction == FeedbackReaction(step: OverlayStep(display: .waiting), sound: .captureEnd))
+}
+
+@Test(arguments: [DictationState.cleaning, .inserting])
+func givenAProcessingDictationWhenItAdvancesThenTheWaitContinuesSilently(state: DictationState) {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+
+    // When
+    let reaction = machine.handle(state)
+
+    // Then
+    #expect(reaction == FeedbackReaction(step: OverlayStep(display: .waiting), sound: nil))
+}
+
+@Test func givenAProcessingDictationWhenItCompletesCleanThenThePillDissolvesImmediately() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+    _ = machine.handle(.inserting)
+
+    // When
+    let reaction = machine.handle(.completed(degraded: false))
+
+    // Then
+    #expect(reaction == FeedbackReaction(step: OverlayStep(display: .hidden), sound: nil))
+}
+
+@Test func givenAProcessingDictationWhenItCompletesDegradedThenTheNoticeShowsForAboutASecond() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+
+    // When
+    let reaction = machine.handle(.completed(degraded: true))
+
+    // Then
+    let step = OverlayStep(display: .notice("Inserted without cleanup"), dissolveAfter: 1.0)
+    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+}
+
+@Test(arguments: [
+    (FailureReason.emptyDictation, "Nothing heard"),
+    (FailureReason.secureField, "Secure field — dictation refused"),
+    (FailureReason.transcriptionFailed, "Transcription failed"),
+    (FailureReason.insertionFailed, "Insertion failed"),
+    (FailureReason.micUnavailable, "Microphone unavailable"),
+    (FailureReason.permissionRevoked, "Microphone access revoked"),
+])
+func givenAProcessingDictationWhenItFailsThenItsShortCauseShowsBriefly(
+    scenario: (FailureReason, String)
+) {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+
+    // When
+    let reaction = machine.handle(.failed(reason: scenario.0))
+
+    // Then
+    let step = OverlayStep(display: .notice(scenario.1), dissolveAfter: 1.5)
+    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+}
+
+@Test func givenACapturingDictationWhenTheMicFailsThenTheEndSoundStillPlays() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+
+    // When
+    let reaction = machine.handle(.failed(reason: .micUnavailable))
+
+    // Then
+    #expect(reaction.sound == .captureEnd)
+}
+
+@Test(arguments: [
+    (RefusalCause.engineLoading, "Models loading…"),
+    (RefusalCause.engineUnavailable(cause: .modelsMissing), "Models missing"),
+    (RefusalCause.pipelineBusy, "Still processing…"),
+])
+func givenAnyDictationAttemptWhenItIsRefusedThenTheCauseShowsBrieflyWithoutASound(
+    scenario: (RefusalCause, String)
+) {
+    // Given
+    let machine = FeedbackMachine()
+
+    // When
+    let reaction = machine.handle(refusal: scenario.0)
+
+    // Then
+    let step = OverlayStep(display: .notice(scenario.1), dissolveAfter: 1.5)
+    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+}
+
+@Test func givenAProcessingDictationWhenANewPressIsRefusedThenTheNoticeRevertsToTheWait() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+
+    // When
+    let reaction = machine.handle(refusal: .pipelineBusy)
+
+    // Then
+    let step = OverlayStep(
+        display: .notice("Still processing…"), dissolveAfter: 1.5, revertsTo: .waiting
+    )
+    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+}
+
+@Test func givenACompletedDictationWhenANewCaptureBeginsThenTheStartSoundPlaysAgain() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.transcribing)
+    _ = machine.handle(.completed(degraded: false))
+
+    // When
+    let reaction = machine.handle(.capturing)
+
+    // Then
+    #expect(reaction == FeedbackReaction(step: OverlayStep(display: .waveform), sound: .captureStart))
+}
