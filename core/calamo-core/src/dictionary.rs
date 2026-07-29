@@ -89,15 +89,20 @@ impl Dictionary {
         &self.entries[..self.entries.len().min(BOOST_LIST_MAX_ENTRIES)]
     }
 
-    /// Cleanup-prompt view: the first 50 canonicals, plus — beyond them —
-    /// only entries fuzzily present in the transcript.
-    pub fn prompt_glossary(&self, raw_transcript: &str) -> Vec<&str> {
-        let mut glossary: Vec<&str> = self
-            .entries
+    /// The transcript-independent part of every prompt glossary — what a
+    /// background prompt-prefix warm-up can precompute.
+    pub fn fixed_prompt_glossary(&self) -> Vec<&str> {
+        self.entries
             .iter()
             .take(PROMPT_GLOSSARY_FIXED_ENTRIES)
             .map(|e| e.canonical_text())
-            .collect();
+            .collect()
+    }
+
+    /// Cleanup-prompt view: the first 50 canonicals, plus — beyond them —
+    /// only entries fuzzily present in the transcript.
+    pub fn prompt_glossary(&self, raw_transcript: &str) -> Vec<&str> {
+        let mut glossary = self.fixed_prompt_glossary();
 
         if self.entries.len() > PROMPT_GLOSSARY_FIXED_ENTRIES {
             let word_norms = matching::normalized_words(raw_transcript);

@@ -10,3 +10,4 @@ mod dictionary_reload;
 mod engine_state_gate;
 mod graceful_degradation;
 mod nominal_cycle;
+mod teardown;

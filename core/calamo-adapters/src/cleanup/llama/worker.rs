@@ -22,10 +22,14 @@ use crate::cleanup::prompt;
 const CONTEXT_TOKENS: u32 = 4096;
 const BATCH_TOKENS: usize = 2048;
 
-pub(super) struct Request {
-    pub transcript: String,
-    pub glossary: Vec<String>,
-    pub reply: Sender<Result<String, CleanupError>>,
+pub(super) enum Request {
+    Clean {
+        transcript: String,
+        glossary: Vec<String>,
+        reply: Sender<Result<String, CleanupError>>,
+    },
+    /// Decode the prefix for this glossary ahead of the next dictation.
+    Warm { glossary: Vec<String> },
 }
 
 // The context borrows the model: both live on `run`'s stack frame.
@@ -71,13 +75,10 @@ fn serve(
         context,
         prefix: None,
     };
-    // Decode the glossary-less prefix now, overlapping the shell's ASR load:
-    // the first dictation then only pays the snapshot restore. A failure here
-    // resurfaces on the first clean.
-    let _ = engine.ensure_prefix(&[]);
+    // No decode up front: the host warms the real glossary right after load,
+    // so the first dictation only pays the snapshot restore.
     while let Ok(request) = requests.recv() {
-        let result = engine.clean(&request.transcript, &request.glossary);
-        let _ = request.reply.send(result);
+        engine.handle(request);
     }
 }
 
@@ -105,6 +106,22 @@ struct Prefix {
 }
 
 impl Engine<'_> {
+    fn handle(&mut self, request: Request) {
+        match request {
+            Request::Clean {
+                transcript,
+                glossary,
+                reply,
+            } => {
+                let _ = reply.send(self.clean(&transcript, &glossary));
+            }
+            // A warm failure resurfaces on the next clean.
+            Request::Warm { glossary } => {
+                let _ = self.ensure_prefix(&glossary);
+            }
+        }
+    }
+
     fn clean(&mut self, transcript: &str, glossary: &[String]) -> Result<String, CleanupError> {
         self.ensure_prefix(glossary)?;
         self.restore_prefix()?;

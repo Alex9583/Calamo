@@ -52,7 +52,9 @@ impl DictationEngine {
     pub fn load_cleanup(&self) -> Result<(), CleanupLoadError> {
         self.cleanup
             .load(&self.config.cleanup_model_path)
-            .map_err(|message| CleanupLoadError::Failed { message })
+            .map_err(|message| CleanupLoadError::Failed { message })?;
+        self.inner.warm_cleanup();
+        Ok(())
     }
 
     pub fn hotkey_pressed(&self) {

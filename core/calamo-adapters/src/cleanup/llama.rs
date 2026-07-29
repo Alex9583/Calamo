@@ -82,15 +82,29 @@ impl LlamaCleanup {
 impl CleanupPort for LlamaCleanup {
     fn clean(&self, transcript: &RawTranscript, glossary: &[&str]) -> Result<String, CleanupError> {
         let (reply_tx, reply_rx) = mpsc::channel();
-        let request = worker::Request {
+        let request = worker::Request::Clean {
             transcript: transcript.text().to_string(),
-            glossary: glossary.iter().map(|term| term.to_string()).collect(),
+            glossary: owned(glossary),
             reply: reply_tx,
         };
         let requests = self.requests.as_ref().expect("present until drop");
         requests.send(request).map_err(|_| engine_gone())?;
         reply_rx.recv().map_err(|_| engine_gone())?
     }
+
+    /// Queued behind any in-flight clean, decoded on the engine thread: the
+    /// caller never waits, dictations in progress keep their prefix.
+    fn warm_glossary(&self, glossary: &[&str]) {
+        let request = worker::Request::Warm {
+            glossary: owned(glossary),
+        };
+        let requests = self.requests.as_ref().expect("present until drop");
+        let _ = requests.send(request);
+    }
+}
+
+fn owned(glossary: &[&str]) -> Vec<String> {
+    glossary.iter().map(|term| term.to_string()).collect()
 }
 
 fn engine_gone() -> CleanupError {

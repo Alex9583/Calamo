@@ -15,6 +15,7 @@ pub struct CleanupCall {
 pub struct ScriptedCleanup {
     script: Mutex<VecDeque<Result<String, CleanupError>>>,
     calls: Mutex<Vec<CleanupCall>>,
+    warmed: Mutex<Vec<Vec<String>>>,
 }
 
 impl ScriptedCleanup {
@@ -22,6 +23,7 @@ impl ScriptedCleanup {
         Arc::new(Self {
             script: Mutex::new(VecDeque::new()),
             calls: Mutex::new(Vec::new()),
+            warmed: Mutex::new(Vec::new()),
         })
     }
 
@@ -38,6 +40,10 @@ impl ScriptedCleanup {
     pub fn calls(&self) -> Vec<CleanupCall> {
         std::mem::take(&mut *self.calls.lock().unwrap())
     }
+
+    pub fn warmed_glossaries(&self) -> Vec<Vec<String>> {
+        std::mem::take(&mut *self.warmed.lock().unwrap())
+    }
 }
 
 impl CleanupPort for ScriptedCleanup {
@@ -48,5 +54,12 @@ impl CleanupPort for ScriptedCleanup {
         });
         let scripted = self.script.lock().unwrap().pop_front();
         scripted.unwrap_or_else(|| Ok(transcript.text().to_string()))
+    }
+
+    fn warm_glossary(&self, glossary: &[&str]) {
+        self.warmed
+            .lock()
+            .unwrap()
+            .push(glossary.iter().map(|s| s.to_string()).collect());
     }
 }

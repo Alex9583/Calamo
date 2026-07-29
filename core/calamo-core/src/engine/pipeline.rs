@@ -33,7 +33,7 @@ pub(super) fn spawn(
     cleanup: Arc<dyn CleanupPort>,
     insertion: Arc<dyn InsertionPort>,
     observer: Arc<dyn DictationObserver>,
-) {
+) -> thread::JoinHandle<()> {
     let pipeline = Pipeline {
         transcription,
         cleanup,
@@ -48,7 +48,7 @@ pub(super) fn spawn(
             };
             shared.finish_job_and_dispatch_next();
         }
-    });
+    })
 }
 
 impl Shared {

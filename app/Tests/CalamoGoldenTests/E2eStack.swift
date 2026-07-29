@@ -15,18 +15,37 @@ struct E2eStack {
     let engine: DictationEngine
     let insertion: CapturingInsertion
     let observer: TerminalObserver
+    let dictionaryURL: URL
 
-    static func load() throws -> E2eStack {
+    static func load(dictionary: String) throws -> E2eStack {
         let insertion = CapturingInsertion()
         let observer = TerminalObserver()
+        let dictionaryURL = try writtenDictionary(dictionary)
         let engine = DictationEngine(
             transcription: try FluidAudioTranscription.load(paths: .defaultCache()),
             insertion: insertion,
             observer: observer,
-            config: EngineConfig(dictionaryPath: "", cleanupModelPath: ggufPath()))
+            config: EngineConfig(dictionaryPath: dictionaryURL.path, cleanupModelPath: ggufPath()))
         try engine.loadCleanup()
         engine.markReady()
-        return E2eStack(engine: engine, insertion: insertion, observer: observer)
+        return E2eStack(
+            engine: engine, insertion: insertion, observer: observer, dictionaryURL: dictionaryURL)
+    }
+
+    /// The user's hot edit: save the TOML, the shell relays the change.
+    func editDictionary(_ toml: String) throws {
+        try toml.write(to: dictionaryURL, atomically: true, encoding: .utf8)
+        try engine.reloadDictionary()
+    }
+
+    private static func writtenDictionary(_ toml: String) throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("calamo-e2e-\(UUID().uuidString)")
+            .appendingPathComponent("dictionary.toml")
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try toml.write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
     static func ggufPath() -> String {

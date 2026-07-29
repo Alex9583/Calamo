@@ -112,6 +112,26 @@ mod prompt_glossary {
     }
 
     #[test]
+    fn given_more_than_50_entries_when_deriving_the_fixed_glossary_then_only_the_first_50_are_listed(
+    ) {
+        // Given
+        let mut entries: Vec<DictionaryEntry> = (0..50)
+            .map(|i| DictionaryEntry::new(format!("Entry{i:02}")))
+            .collect();
+        entries.push(DictionaryEntry::new("Kubernetes"));
+        let dictionary = Dictionary::new(entries).unwrap();
+
+        // When
+        let fixed = dictionary.fixed_prompt_glossary();
+
+        // Then: the transcript-independent part every dictation shares
+        assert_eq!(fixed.len(), 50);
+        assert_eq!(fixed[0], "Entry00");
+        assert_eq!(fixed[49], "Entry49");
+        assert!(!fixed.contains(&"Kubernetes"));
+    }
+
+    #[test]
     fn given_more_than_50_entries_when_deriving_the_glossary_then_only_entries_heard_in_the_transcript_are_added(
     ) {
         // Given

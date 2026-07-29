@@ -45,8 +45,25 @@ pub enum CaptureIncident {
 }
 
 pub struct DictationEngine {
+    /// Declared first: its drop closes the job channel the pipeline thread
+    /// waits on, so the `pipeline` join below never blocks on it.
     shared: Arc<Shared>,
     repository: Arc<dyn DictionaryRepository>,
+    cleanup: Arc<dyn CleanupPort>,
+    _pipeline: PipelineThread,
+}
+
+/// Joined on drop: the port clones the thread holds are released before the
+/// engine's drop returns, so an adapter's own teardown (e.g. freeing a Metal
+/// context) never races the host process's exit.
+struct PipelineThread(Option<std::thread::JoinHandle<()>>);
+
+impl Drop for PipelineThread {
+    fn drop(&mut self) {
+        if let Some(thread) = self.0.take() {
+            let _ = thread.join();
+        }
+    }
 }
 
 struct Shared {
@@ -97,30 +114,26 @@ impl DictationEngine {
         observer: Arc<dyn DictationObserver>,
         repository: Arc<dyn DictionaryRepository>,
     ) -> Self {
-        let dictionary = repository
-            .load()
-            .unwrap_or_else(|_| Dictionary::new(Vec::new()).expect("empty dictionary is valid"));
         let (job_tx, job_rx) = mpsc::channel();
-        let shared = Arc::new(Shared {
-            observer: Arc::clone(&observer),
+        let shared = Arc::new(Shared::loading(
+            Arc::clone(&observer),
             job_tx,
-            state: Mutex::new(State {
-                availability: EngineState::Loading,
-                dictionary: Arc::new(dictionary),
-                capture: None,
-                pipeline_busy: false,
-                next_id: 1,
-            }),
-        });
-        pipeline::spawn(
+            repository.as_ref(),
+        ));
+        let pipeline = PipelineThread(Some(pipeline::spawn(
             job_rx,
             Arc::downgrade(&shared),
             transcription,
-            cleanup,
+            Arc::clone(&cleanup),
             insertion,
             observer,
-        );
-        Self { shared, repository }
+        )));
+        Self {
+            shared,
+            repository,
+            cleanup,
+            _pipeline: pipeline,
+        }
     }
 
     pub fn hotkey_pressed(&self) {
@@ -146,9 +159,21 @@ impl DictationEngine {
     /// On failure the previous dictionary stays active — an invalid file
     /// never breaks dictation; the error feeds the shell's notification.
     pub fn reload_dictionary(&self) -> Result<(), DictionaryLoadError> {
-        let dictionary = self.repository.load()?;
-        self.shared.state.lock().unwrap().dictionary = Arc::new(dictionary);
+        let dictionary = Arc::new(self.repository.load()?);
+        self.shared.state.lock().unwrap().dictionary = Arc::clone(&dictionary);
+        self.warm_glossary_of(&dictionary);
         Ok(())
+    }
+
+    /// Called when the cleanup adapter becomes ready: hint the current
+    /// dictionary's glossary so the first dictation doesn't pay the prefix.
+    pub fn warm_cleanup(&self) {
+        let dictionary = Arc::clone(&self.shared.state.lock().unwrap().dictionary);
+        self.warm_glossary_of(&dictionary);
+    }
+
+    fn warm_glossary_of(&self, dictionary: &Dictionary) {
+        self.cleanup.warm_glossary(&dictionary.fixed_prompt_glossary());
     }
 
     /// Fails the capturing Dictation; the release that follows finds no
@@ -251,6 +276,31 @@ impl State {
             id: capture.id,
             utterance: Utterance::new(capture.samples),
             dictionary: Arc::clone(&self.dictionary),
+        }
+    }
+}
+
+impl Shared {
+    /// A fresh engine: Loading, with the repository's dictionary — or an
+    /// empty one, an unreadable file never blocks startup.
+    fn loading(
+        observer: Arc<dyn DictationObserver>,
+        job_tx: Sender<Job>,
+        repository: &dyn DictionaryRepository,
+    ) -> Self {
+        let dictionary = repository
+            .load()
+            .unwrap_or_else(|_| Dictionary::new(Vec::new()).expect("empty dictionary is valid"));
+        Self {
+            observer,
+            job_tx,
+            state: Mutex::new(State {
+                availability: EngineState::Loading,
+                dictionary: Arc::new(dictionary),
+                capture: None,
+                pipeline_busy: false,
+                next_id: 1,
+            }),
         }
     }
 }

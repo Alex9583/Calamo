@@ -59,4 +59,13 @@ impl CleanupPort for DeferredCleanup {
             message: NOT_COMPILED.to_string(),
         })
     }
+
+    // Before the model loads there is no prefix to warm; the facade warms
+    // again once the load completes.
+    #[cfg(all(feature = "llama-cleanup", target_os = "macos"))]
+    fn warm_glossary(&self, glossary: &[&str]) {
+        if let Some(adapter) = &*self.slot.read().unwrap() {
+            adapter.warm_glossary(glossary);
+        }
+    }
 }

@@ -45,6 +45,9 @@ fn harness() -> Option<Harness> {
     let manifest = contract_data::load_manifest(&contract);
     let glossary = contract.glossary.terms();
     let adapter = LlamaCleanup::load(&gguf).expect("loading the pinned model");
+    // Warm as the app does after load: the first vector then cleans over
+    // the pre-decoded prefix.
+    adapter.warm_glossary(&glossary.iter().map(String::as_str).collect::<Vec<_>>());
     Some(Harness {
         adapter,
         contract,

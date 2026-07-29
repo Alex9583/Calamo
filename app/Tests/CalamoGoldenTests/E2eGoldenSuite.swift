@@ -18,32 +18,64 @@ struct E2eGoldenSuite {
         let failures: [String]
     }
 
+    /// The spelling the hot-edit demo adds while dictating mx-01.
+    private let hotEditSpelling = "Design System"
+
     @Test(.enabled(if: GoldenGate.isRequested))
-    func givenTheCorpusWhenDictatedThroughTheRealChainThenTheE2eGoldenHolds() throws {
+    func givenAHotEditedDictionaryWhenTheCorpusIsDictatedThroughTheRealChainThenTheE2eGoldenHolds()
+        throws
+    {
         GoldenGate.modelLock.lock()
         defer { GoldenGate.modelLock.unlock() }
 
         // Given: the literal thresholds, the private references, the real
-        // chain behind the facade with a capturing insertion double
+        // chain whose dictionary starts without the hot-edit term
         let vectors: E2eGoldenVectors = try GoldenFixtures.decode("e2e-golden.json")
         let contract: TranscriptionContract = try GoldenFixtures.decode(vectors.contract)
         let manifest = try GoldenFixtures.manifest(for: contract)
-        let stack = try E2eStack.load()
+        let stack = try E2eStack.load(
+            dictionary: contract.dictionaryToml(excluding: [hotEditSpelling]))
 
-        // When: every take dictated end to end, in corpus order
+        // When: the term is dictated, hot-added, redictated — then every take
+        // dictated end to end, in corpus order
+        var failures = try hotEditBreaches(stack, contract)
         let outcomes = try contract.takes.map { vector in
             dictated(vector, stack, contract, try manifest.fixture(vector.id))
         }
 
         // Then: per-take hard assertions, the literal similarity budget, and
         // byte-stability against the baseline
-        var failures = outcomes.flatMap(\.failures)
+        failures += outcomes.flatMap(\.failures)
         failures += similarityBreaches(outcomes, vectors: vectors)
         failures += try GoldenBaseline.checkOrBootstrap(
             name: "e2e-baseline.json",
             environment: environment(),
             outputs: Dictionary(uniqueKeysWithValues: outcomes.map { ($0.id, $0.text) }))
         #expect(failures.isEmpty, "\n\(failures.joined(separator: "\n"))")
+    }
+
+    /// Dictated without its entry, the spelling lands however ASR heard it;
+    /// added to the TOML and hot-reloaded — same engine, no restart — the
+    /// same take lands with the exact spelling.
+    private func hotEditBreaches(_ stack: E2eStack, _ contract: TranscriptionContract)
+        throws -> [String]
+    {
+        let take = try #require(contract.takes.first { $0.id == "mx-01" })
+        let audio = try samples(for: take, in: contract)
+        var breaches = [String]()
+        let before = try stack.dictate(audio)
+        if TextMetrics.termExact(hotEditSpelling, in: before) {
+            breaches.append(
+                "hot-edit: « \(hotEditSpelling) » already exact without its entry in: \(before)")
+        }
+        try stack.editDictionary(contract.dictionaryToml())
+        let after = try stack.dictate(audio)
+        if !TextMetrics.termExact(hotEditSpelling, in: after) {
+            breaches.append(
+                "hot-edit: « \(hotEditSpelling) » not exact after the edit in: \(after)")
+        }
+        print("[e2e-golden] hot-edit mx-01: « \(before) » → « \(after) »")
+        return breaches
     }
 
     private func dictated(

@@ -22,6 +22,11 @@ pub struct TranscriptionError {
 /// Never fatal on failure: the engine degrades to the verbatim transcript.
 pub trait CleanupPort: Send + Sync {
     fn clean(&self, transcript: &RawTranscript, glossary: &[&str]) -> Result<String, CleanupError>;
+
+    /// Non-blocking hint that upcoming cleans will carry this glossary — an
+    /// adapter may precompute (e.g. decode its prompt prefix) in the
+    /// background so the next dictation doesn't pay it.
+    fn warm_glossary(&self, _glossary: &[&str]) {}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -33,6 +33,35 @@ fn given_an_edited_dictionary_when_reloaded_then_the_next_dictation_uses_it() {
 }
 
 #[test]
+fn given_an_edited_dictionary_when_reloaded_then_the_cleanup_glossary_is_warmed() {
+    // Given
+    let harness = Harness::ready_with_dictionary(dictionary_of("GitHub"));
+    harness.repository.holds(dictionary_of("Jira"));
+
+    // When
+    let reloaded = harness.engine.reload_dictionary();
+
+    // Then: the port is hinted before any dictation pays the prefix decode
+    assert_eq!(reloaded, Ok(()));
+    assert_eq!(harness.cleanup.warmed_glossaries(), [vec!["Jira".to_string()]]);
+}
+
+#[test]
+fn given_a_cleanup_becoming_ready_when_warmed_then_the_port_receives_the_fixed_glossary() {
+    // Given
+    let harness = Harness::ready_with_dictionary(dictionary_of("GitHub"));
+
+    // When
+    harness.engine.warm_cleanup();
+
+    // Then
+    assert_eq!(
+        harness.cleanup.warmed_glossaries(),
+        [vec!["GitHub".to_string()]]
+    );
+}
+
+#[test]
 fn given_an_invalid_dictionary_file_when_reloaded_then_the_previous_dictionary_stays_active() {
     // Given
     let harness = Harness::ready_with_dictionary(dictionary_of("GitHub"));

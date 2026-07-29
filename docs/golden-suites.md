@@ -9,7 +9,7 @@ requested run fails loudly.
 |---|---|---|---|
 | ASR | audio → RawTranscript (boosted FluidAudio adapter) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh asr` |
 | Cleanup | verbatim → CleanedText (Qwen3.5-2B + SpellingEnforcement) | `core/calamo-adapters/tests/cleanup_golden` | `scripts/golden.sh cleanup` |
-| E2E | audio → inserted text (`DictationEngine`, insertion doubled) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh e2e` |
+| E2E | audio → inserted text (`DictationEngine`, insertion doubled, reference dictionary hot-edited mid-suite) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh e2e` |
 
 Each suite prints a per-take report and asserts two layers:
 
@@ -52,15 +52,15 @@ identical runs** on the reference machine: `scripts/golden.sh --rite <suite>`.
 Greedy decoding and batch ASR make runs byte-identical — any run-to-run
 variance is a bug to diagnose, never a threshold to widen.
 
-## Known red: E2E spelling until ticket 13
+## The E2E dictionary and the hot-edit demo
 
-The walking skeleton pins an empty dictionary in the facade, so the E2E
-chain runs unboosted, glossary-less, with SpellingEnforcement as a no-op.
-One hard assertion is red on the current baseline — mx-01 « design system »
-not spelled « Design System » — and stays red until ticket 13 wires
-`boostList()` / `promptGlossary()` / SpellingEnforcement end to end; that
-ticket's acceptance explicitly includes turning this golden green. Everything
-else (language 15/15, zero never-spoken terms, similarity budget 2/2) holds.
+The E2E suite writes the transcription contract's vocabulary as a real
+`dictionary.toml` and opens with the hot-edit demo: mx-01 dictated without
+« Design System » lands with some other spelling; the entry is added to the
+TOML and hot-reloaded — same engine, no restart — and the redictated take
+must carry the exact spelling. The corpus then replays with the full
+reference dictionary: boost, prompt glossary and SpellingEnforcement all
+live.
 
 ## Cadence
 

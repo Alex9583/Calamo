@@ -42,6 +42,19 @@ struct TranscriptionContract: Decodable {
     var boostList: [BoostEntry] {
         boost.entries.map { BoostEntry(canonicalText: $0.text, aliases: $0.aliases ?? []) }
     }
+
+    /// The reference vocabulary as the user's dictionary.toml.
+    func dictionaryToml(excluding excluded: Set<String> = []) -> String {
+        let lines = boost.entries
+            .filter { !excluded.contains($0.text) }
+            .map { entry in
+                let aliases = (entry.aliases ?? []).map { "\"\($0)\"" }.joined(separator: ", ")
+                return aliases.isEmpty
+                    ? "    { text = \"\(entry.text)\" },"
+                    : "    { text = \"\(entry.text)\", aliases = [\(aliases)] },"
+            }
+        return "entries = [\n\(lines.joined(separator: "\n"))\n]\n"
+    }
 }
 
 enum GoldenFixtures {
