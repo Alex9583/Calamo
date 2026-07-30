@@ -1,42 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Calamo — app icon. Voice (waveform crescendo) becoming writing (calamus/quill). -->
-  <defs>
-    <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1024">
-      <stop offset="0" stop-color="#3FE0C5"/>
-      <stop offset="1" stop-color="#087F6F"/>
-    </linearGradient>
-    <linearGradient id="sheen" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="560">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
-    <clipPath id="squircle">
-      <rect x="0" y="0" width="1024" height="1024" rx="230"/>
-    </clipPath>
-  </defs>
-
-  <!-- Background squircle with a soft top wash -->
-  <g clip-path="url(#squircle)">
-    <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
-    <rect x="0" y="0" width="1024" height="560" fill="url(#sheen)"/>
-  </g>
-
-  <!-- Glyph: 3 waveform bars rising into a quill -->
-  <g transform="translate(-12,32)">
-    <g fill="#FFFFFF">
-      <rect x="228" y="460" width="56" height="120" rx="28"/>
-      <rect x="316" y="405" width="56" height="230" rx="28"/>
-      <rect x="404" y="340" width="56" height="360" rx="28"/>
-      <!-- Quill body -->
-      <path d="M 498 718
-               C 552 646 606 556 660 480
-               C 714 404 748 318 756 238
-               C 806 300 824 392 796 486
-               C 764 592 650 690 498 718 Z"/>
+  <!-- Calamo app icon. One shape, two readings: a quill whose notched barbs
+       are a waveform; the bare shaft is the calamus, cut like a nib. -->
+  <rect x="0" y="0" width="1024" height="1024" rx="230" fill="#0D6B5E"/>
+  <g transform="translate(512 512) scale(1.32) translate(-526 -505) rotate(45 512 512)">
+    <path fill="#F4EEE1" d="M 540 185
+      C 620 260 660 350 660 445
+      C 660 540 590 615 532 650
+      L 496 650
+      C 445 610 390 535 388 445
+      C 386 345 430 250 505 195 Z"/>
+    <path fill="#F4EEE1" d="M 496 638 L 532 638 L 522 790 L 496 812 Z"/>
+    <g stroke="#0D6B5E" stroke-width="30" stroke-linecap="round">
+      <line x1="330" y1="275" x2="446" y2="275"/>
+      <line x1="330" y1="352" x2="462" y2="352"/>
+      <line x1="330" y1="429" x2="448" y2="429"/>
+      <line x1="330" y1="506" x2="466" y2="506"/>
+      <line x1="330" y1="583" x2="442" y2="583"/>
     </g>
-    <!-- Central vein (rachis) + nib slit, cut in background color -->
-    <path d="M 512 706
-             C 600 640 686 540 730 470
-             C 762 416 762 330 754 262"
-          fill="none" stroke="url(#bg)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 512 640 C 508 500 512 360 528 230" fill="none" stroke="#0D6B5E" stroke-width="13" stroke-linecap="round"/>
   </g>
 </svg>

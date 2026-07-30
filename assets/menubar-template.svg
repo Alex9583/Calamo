@@ -1,10 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44">
-  <!-- Calamo — menu bar template glyph (macOS renders template images from alpha;
-       keep it black, simple, readable at 16-18 px). -->
-  <g fill="#000000">
-    <rect x="3"  y="16" width="6" height="12" rx="3"/>
-    <rect x="12" y="11" width="6" height="22" rx="3"/>
-    <rect x="21" y="6"  width="6" height="32" rx="3"/>
-    <path d="M 29 38 C 34 31 38 23 39.5 13 C 43.5 17 44.5 25 41.5 30.5 C 38.5 36 34 38 29 38 Z"/>
+  <!-- Calamo menu bar template glyph (macOS renders template images from alpha:
+       notches must be transparent, hence the mask; chunkier than the icon
+       so they survive 16-18 px). The mask sits on an untransformed wrapper
+       so mask and content share one coordinate space. -->
+  <defs>
+    <mask id="cuts">
+      <rect x="0" y="0" width="44" height="44" fill="#FFFFFF"/>
+      <g transform="rotate(45 22 22)" stroke="#000000" stroke-width="4" stroke-linecap="round" fill="none">
+        <line x1="10" y1="9.5" x2="17.5" y2="9.5"/>
+        <line x1="10" y1="14.5" x2="19.5" y2="14.5"/>
+        <line x1="10" y1="19.5" x2="16.5" y2="19.5"/>
+      </g>
+    </mask>
+  </defs>
+  <g mask="url(#cuts)" fill="#000000">
+    <g transform="rotate(45 22 22)">
+      <path d="M 23 4
+        C 27.4 6.4 29.5 10.5 29.5 14.5
+        C 29.5 19 26.5 22.6 24 24
+        L 20.2 24
+        C 17.4 22.2 14.6 19.2 14.5 14.5
+        C 14.4 9.6 18 5.8 23 4 Z"/>
+      <path d="M 20.2 23.5 L 23.8 23.5 L 22.6 36 L 21 38 Z"/>
+    </g>
   </g>
 </svg>

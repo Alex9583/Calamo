@@ -1,14 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 230 660 560" width="660" height="560">
-  <!-- Calamo — standalone mark (single color, inherits currentColor). -->
-  <g fill="currentColor">
-    <rect x="228" y="460" width="56" height="120" rx="28"/>
-    <rect x="316" y="405" width="56" height="230" rx="28"/>
-    <rect x="404" y="340" width="56" height="360" rx="28"/>
-    <path fill-rule="evenodd" d="M 502 714
-             C 560 640 614 548 674 472
-             C 734 396 764 320 760 242
-             C 818 304 838 404 800 508
-             C 760 616 642 692 502 714 Z
-             M 512 694 L 610 556 L 594 544 L 498 684 Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="274 266 506 464" width="506" height="464">
+  <!-- Calamo standalone mark (single color, inherits currentColor).
+       Waveform notches and rachis are cut out via mask. The mask sits on an
+       untransformed wrapper so mask and content share one coordinate space. -->
+  <defs>
+    <mask id="cuts">
+      <rect x="274" y="266" width="506" height="464" fill="#FFFFFF"/>
+      <g transform="rotate(45 512 512)" fill="none" stroke="#000000" stroke-linecap="round">
+        <g stroke-width="30">
+          <line x1="330" y1="275" x2="446" y2="275"/>
+          <line x1="330" y1="352" x2="462" y2="352"/>
+          <line x1="330" y1="429" x2="448" y2="429"/>
+          <line x1="330" y1="506" x2="466" y2="506"/>
+          <line x1="330" y1="583" x2="442" y2="583"/>
+        </g>
+        <path d="M 512 640 C 508 500 512 360 528 230" stroke-width="13"/>
+      </g>
+    </mask>
+  </defs>
+  <g mask="url(#cuts)" fill="currentColor">
+    <g transform="rotate(45 512 512)">
+      <path d="M 540 185
+        C 620 260 660 350 660 445
+        C 660 540 590 615 532 650
+        L 496 650
+        C 445 610 390 535 388 445
+        C 386 345 430 250 505 195 Z"/>
+      <path d="M 496 638 L 532 638 L 522 790 L 496 812 Z"/>
+    </g>
   </g>
 </svg>
