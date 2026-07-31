@@ -1,69 +1,80 @@
 // Menu bar shell around the DictationEngine facade, all adapters live: the
 // models load in the background while the engine gates dictation on Ready.
+// AppKit lifecycle: the status item pulses and composes badges, which a
+// MenuBarExtra label cannot render.
 import AVFoundation
 import AppKit
 import CalamoCore
+import CalamoFeedback
 import CalamoInput
 import CalamoInsertion
-import SwiftUI
-
-/// Relays engine state to the menu bar; dictation events are rendered by
-/// the FeedbackObserver upstream in the chain.
-final class EngineStateModel: ObservableObject, DictationObserver, @unchecked Sendable {
-    @Published var statusLabel = "Engine: loading…"
-
-    func dictationStateChanged(dictation: UInt64, state: DictationState) {}
-
-    func dictationRefused(cause: RefusalCause) {}
-
-    func engineStateChanged(state: EngineState) {
-        let label =
-            switch state {
-            case .loading: "Engine: loading…"
-            case .ready: "Engine: ready"
-            case .unavailable(.modelsMissing): "Engine: models missing"
-            }
-        DispatchQueue.main.async { self.statusLabel = label }
-    }
-}
 
 @main
-struct CalamoApp: App {
-    private let engine: DictationEngine
-    private let input: PushToTalkInput
-    private let dictionaryWatcher: DictionaryWatcher
-    @StateObject private var engineState: EngineStateModel
+@MainActor
+final class CalamoApp: NSObject, NSApplicationDelegate {
+    private var engine: DictationEngine?
+    private var input: PushToTalkInput?
+    private var transcription: DeferredTranscription?
+    private var dictionaryWatcher: DictionaryWatcher?
+    private var menuBar: MenuBarController?
 
-    init() {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = CalamoApp()
+        app.delegate = delegate
+        app.run()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
         let trace = PipelineTrace.fromEnvironment
-        let model = EngineStateModel()
         let overlay = OverlayController()
-        let observer = Self.makeObserver(model: model, overlay: overlay, trace: trace)
+        let menuBar = MenuBarController()
         let transcription = DeferredTranscription()
-        engine = DictationEngine(
-            transcription: transcription,
-            insertion: SimulatedPasteInsertion(),
-            observer: observer,
-            config: EngineConfig(
-                dictionaryPath: DictionaryFile.url.path,
-                cleanupModelPath: ModelLoader.cleanupModelPath()
-            )
-        )
-        _engineState = StateObject(wrappedValue: model)
-        input = PushToTalkInput(
-            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
+        let engine = Self.makeEngine(
+            observer: Self.makeObserver(menuBar: menuBar, overlay: overlay, trace: trace),
+            transcription: transcription)
+        menuBar.perform = { [weak self] in self?.perform($0) }
+        (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
+        input = PushToTalkInput(sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
         Self.requestPermissions()
-        if !input.start() {
+        if input?.start() != true {
             NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
         }
         ModelLoader.start(engine: engine, transcription: transcription)
     }
 
+    private func perform(_ action: StatusAction) {
+        switch action {
+        case .openAccessibilitySettings: SystemSettings.openAccessibility()
+        case .openMicrophoneSettings: SystemSettings.openMicrophone()
+        case .redownloadModels: reloadModels()
+        }
+    }
+
+    // Interim retry until the ModelStore (ticket 19) owns downloads.
+    private func reloadModels() {
+        guard let engine, let transcription else { return }
+        engine.markLoading()
+        ModelLoader.start(engine: engine, transcription: transcription)
+    }
+
+    private static func makeEngine(
+        observer: DictationObserver, transcription: DeferredTranscription
+    ) -> DictationEngine {
+        DictationEngine(
+            transcription: transcription,
+            insertion: SimulatedPasteInsertion(),
+            observer: observer,
+            config: EngineConfig(
+                dictionaryPath: DictionaryFile.url.path,
+                cleanupModelPath: ModelLoader.cleanupModelPath()))
+    }
+
     private static func makeObserver(
-        model: EngineStateModel, overlay: OverlayController, trace: PipelineTrace?
+        menuBar: MenuBarController, overlay: OverlayController, trace: PipelineTrace?
     ) -> DictationObserver {
-        let feedback = FeedbackObserver(wrapping: model, overlay: overlay)
+        let feedback = FeedbackObserver(wrapping: menuBar, overlay: overlay)
         guard let trace else { return feedback }
         return TracingObserver(wrapping: feedback, trace: trace)
     }
@@ -89,19 +100,5 @@ struct CalamoApp: App {
         // kAXTrustedCheckOptionPrompt is a C global `var` Swift 6 rejects;
         // its literal value is API.
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-    }
-
-    var body: some Scene {
-        MenuBarExtra("Calamo", systemImage: "waveform") {
-            Text(engineState.statusLabel)
-            Button("Dictionary…") {
-                DictionaryFile.open()
-            }
-            Divider()
-            Button("Quit Calamo") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q")
-        }
     }
 }

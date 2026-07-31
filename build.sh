@@ -59,17 +59,32 @@ if ! xcodebuild -create-xcframework \
   exit 1
 fi
 
+# Finder and the TCC panes show this icon; the status item glyph ships in
+# the SwiftPM resource bundle instead.
+make_icns() {
+  local iconset="$ROOT/build/Calamo.iconset" master="$ROOT/assets/icon-1024.png" size
+  rm -rf "$iconset"; mkdir -p "$iconset"
+  for size in 16 32 128 256 512; do
+    sips -z "$size" "$size" "$master" --out "$iconset/icon_${size}x${size}.png" >/dev/null
+    sips -z "$((size * 2))" "$((size * 2))" "$master" \
+      --out "$iconset/icon_${size}x${size}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$iconset" -o "$1"
+}
+
 SWIFT_BUILD=(swift build -c release --package-path "$ROOT/app")
 echo "== 4/5 swift build -c release (menu bar app) =="
 "${SWIFT_BUILD[@]}"
 
 echo "== 5/5 assemble build/Calamo.app =="
 APP="$ROOT/build/Calamo.app"
-BIN="$("${SWIFT_BUILD[@]}" --show-bin-path)/Calamo"
+BIN_DIR="$("${SWIFT_BUILD[@]}" --show-bin-path)"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/app/Info.plist" "$APP/Contents/Info.plist"
-cp "$BIN" "$APP/Contents/MacOS/Calamo"
+cp "$BIN_DIR/Calamo" "$APP/Contents/MacOS/Calamo"
+cp -R "$BIN_DIR/Calamo_Calamo.bundle" "$APP/Contents/Resources/"
+make_icns "$APP/Contents/Resources/Calamo.icns"
 # Ad-hoc signature: enough to launch locally. TCC persistence across updates
 # will need a stable certificate.
 codesign --force --sign - "$APP"

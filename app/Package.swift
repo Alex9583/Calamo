@@ -19,7 +19,8 @@ let package = Package(
                 "CalamoInsertion",
                 "CalamoTranscription",
             ],
-            path: "Sources/Calamo"
+            path: "Sources/Calamo",
+            resources: [.copy("Resources/menubar-template.svg")]
         ),
         .target(
             name: "CalamoFeedback",

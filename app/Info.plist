@@ -8,6 +8,8 @@
 	<string>Calamo</string>
 	<key>CFBundleExecutable</key>
 	<string>Calamo</string>
+	<key>CFBundleIconFile</key>
+	<string>Calamo</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.calamo.Calamo</string>
 	<key>CFBundleInfoDictionaryVersion</key>
