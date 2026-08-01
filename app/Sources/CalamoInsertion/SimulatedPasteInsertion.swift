@@ -7,8 +7,8 @@ final class SimulatedPasteInsertion {
     private let restoreDelay: TimeInterval
     private let paste: () -> Bool
 
-    convenience init() {
-        self.init(pasteboard: .general, restoreDelay: 0.3, paste: CommandVKeystroke.post)
+    convenience init(paste: @escaping () -> Bool) {
+        self.init(pasteboard: .general, restoreDelay: 0.3, paste: paste)
     }
 
     init(pasteboard: NSPasteboard, restoreDelay: TimeInterval, paste: @escaping () -> Bool) {

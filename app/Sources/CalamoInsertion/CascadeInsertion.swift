@@ -10,12 +10,18 @@ public final class CascadeInsertion: InsertionPort, @unchecked Sendable {
     private let typeSegments: ([KeystrokeSegment]) -> Bool
     private let quirks: PasteQuirks
 
+    /// CALAMO_FORCE_LAST_RESORT=1: the manual checklist's only path to the
+    /// last resort — real apps cannot trigger it (synthesis failure is
+    /// event-allocation failure).
     public convenience init() {
+        let env = ProcessInfo.processInfo.environment
+        let forceLastResort = env["CALAMO_FORCE_LAST_RESORT"] == "1"
         self.init(
             environment: InsertionEnvironment.probe,
-            paste: SimulatedPasteInsertion(),
-            typeSegments: UnicodeKeystrokes.type,
-            quirks: .standard)
+            paste: SimulatedPasteInsertion(
+                paste: forceLastResort ? { false } : CommandVKeystroke.post),
+            typeSegments: forceLastResort ? { _ in false } : UnicodeKeystrokes.type,
+            quirks: .fromEnvironment())
     }
 
     init(

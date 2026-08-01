@@ -34,6 +34,11 @@ cargo clippy --workspace --all-targets --manifest-path core/Cargo.toml
 swiftlint                                    # both lint function length — docs/standards/small-units.md
 ```
 
+Before merging a release PR, the manual pass in
+[docs/manual-checklist.md](docs/manual-checklist.md) walks the OS glue no
+harness can drive — event tap, TCC, real apps, real microphones — and the
+error policy end to end.
+
 ## CI
 
 Every push runs [ci.yml](.github/workflows/ci.yml), the only automatic merge
