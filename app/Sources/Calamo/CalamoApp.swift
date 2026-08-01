@@ -75,7 +75,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     ) -> DictationEngine {
         DictationEngine(
             transcription: transcription,
-            insertion: SimulatedPasteInsertion(),
+            insertion: CascadeInsertion(),
             observer: observer,
             config: EngineConfig(
                 dictionaryPath: DictionaryFile.url.path,

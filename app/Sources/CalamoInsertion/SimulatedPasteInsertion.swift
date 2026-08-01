@@ -1,15 +1,13 @@
 import AppKit
-import CalamoCore
 
-/// InsertionPort adapter: simulated paste at the cursor — the primary (and
-/// for now only) insertion method; the fallback cascade and secure-field
-/// refusal arrive with ticket 17.
-public final class SimulatedPasteInsertion: InsertionPort, @unchecked Sendable {
+/// Main-queue confined, like every pasteboard touch; the cascade owns the
+/// hop.
+final class SimulatedPasteInsertion {
     private let pasteboard: NSPasteboard
     private let restoreDelay: TimeInterval
     private let paste: () -> Bool
 
-    public convenience init() {
+    convenience init() {
         self.init(pasteboard: .general, restoreDelay: 0.3, paste: CommandVKeystroke.post)
     }
 
@@ -19,46 +17,59 @@ public final class SimulatedPasteInsertion: InsertionPort, @unchecked Sendable {
         self.paste = paste
     }
 
-    private struct PendingRestore {
+    /// The user's copy, held while our transient text sits on the pasteboard.
+    /// `work` is the deferred restore after a successful paste; nil after a
+    /// failed one, where restoring waits on the cascade's outcome.
+    private struct HeldSnapshot {
         let snapshot: PasteboardSnapshot
         let changeCountAfterWrite: Int
-        let work: DispatchWorkItem
+        let work: DispatchWorkItem?
     }
 
-    /// Main-queue confined, like every pasteboard touch.
-    private var pendingRestore: PendingRestore?
+    private var held: HeldSnapshot?
 
-    /// Synchronous for the engine's pipeline thread; the main run loop must
-    /// be live.
-    public func insert(text: String) throws {
-        if Thread.isMainThread {
-            return try insertOnMain(text)
-        }
-        return try DispatchQueue.main.sync { try insertOnMain(text) }
-    }
-
-    private func insertOnMain(_ text: String) throws {
+    func attempt(_ text: String) -> Bool {
         let snapshot = snapshotToRestore()
         writeConcealed(text)
         guard paste() else {
-            // Leave the dictation on the pasteboard: recoverable by hand with
-            // Cmd-V, where restoring would erase it (notification at ticket 17).
-            throw InsertionError.Failed(message: "could not synthesize the paste keystroke")
+            held = HeldSnapshot(
+                snapshot: snapshot, changeCountAfterWrite: pasteboard.changeCount, work: nil)
+            return false
         }
         scheduleRestore(of: snapshot)
+        return true
+    }
+
+    /// After a fallback inserted the text another way: the user's copy comes
+    /// back, unless someone wrote over our transient text meanwhile.
+    func restoreAbandonedSnapshot() {
+        guard let held, held.work == nil else { return }
+        self.held = nil
+        if pasteboard.changeCount == held.changeCountAfterWrite {
+            held.snapshot.restore(to: pasteboard)
+        }
+    }
+
+    /// Last resort: the dictation owns the pasteboard now — written plain so
+    /// clipboard managers historize it too, and never restored over.
+    func leaveTextForManualPaste(_ text: String) {
+        held?.work?.cancel()
+        held = nil
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
     }
 
     /// Reuses the held snapshot when a dictation lands before the previous
     /// restore fired — the pasteboard then holds our own transient text, not
     /// the user's copy.
     private func snapshotToRestore() -> PasteboardSnapshot {
-        guard let pending = pendingRestore else {
+        guard let held else {
             return PasteboardSnapshot.capture(from: pasteboard)
         }
-        pending.work.cancel()
-        pendingRestore = nil
-        return pasteboard.changeCount == pending.changeCountAfterWrite
-            ? pending.snapshot
+        held.work?.cancel()
+        self.held = nil
+        return pasteboard.changeCount == held.changeCountAfterWrite
+            ? held.snapshot
             : PasteboardSnapshot.capture(from: pasteboard)
     }
 
@@ -66,14 +77,14 @@ public final class SimulatedPasteInsertion: InsertionPort, @unchecked Sendable {
         let changeCountAfterWrite = pasteboard.changeCount
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            self.pendingRestore = nil
+            self.held = nil
             // A moved changeCount means someone wrote since the paste —
             // restoring would clobber the user's newer copy.
             if self.pasteboard.changeCount == changeCountAfterWrite {
                 snapshot.restore(to: self.pasteboard)
             }
         }
-        pendingRestore = PendingRestore(
+        held = HeldSnapshot(
             snapshot: snapshot, changeCountAfterWrite: changeCountAfterWrite, work: work)
         DispatchQueue.main.asyncAfter(deadline: .now() + restoreDelay, execute: work)
     }

@@ -36,6 +36,7 @@ final class FeedbackObserver: DictationObserver, @unchecked Sendable {
         lock.unlock()
         onMain {
             if let sound = reaction.sound { self.sounds.play(sound) }
+            if let notice = reaction.notice { UserNotifier.deliver(notice) }
             self.overlay.apply(reaction.step)
         }
     }

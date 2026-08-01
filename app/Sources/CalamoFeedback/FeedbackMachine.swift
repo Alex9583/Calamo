@@ -26,7 +26,8 @@ public struct FeedbackMachine {
             }
         return FeedbackReaction(
             step: step,
-            sound: started ? .captureStart : ended ? .captureEnd : nil
+            sound: started ? .captureStart : ended ? .captureEnd : nil,
+            notice: Self.notice(for: state)
         )
     }
 
@@ -51,6 +52,15 @@ public struct FeedbackMachine {
         case .failed(let reason):
             OverlayStep(display: .notice(text(for: reason)), dissolveAfter: briefNotice)
         }
+    }
+
+    /// The whole cascade failed: the text was left on the pasteboard and
+    /// the user finishes with a manual paste — action required.
+    private static func notice(for state: DictationState) -> UserNotice? {
+        guard case .failed(reason: .insertionFailed) = state else { return nil }
+        return UserNotice(
+            title: "Insertion failed", body: "Text copied — paste with ⌘V",
+            identifier: "calamo.insertion-last-resort")
     }
 
     private static func text(for reason: FailureReason) -> String {

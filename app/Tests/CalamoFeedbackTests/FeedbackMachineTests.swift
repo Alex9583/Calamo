@@ -89,7 +89,40 @@ func givenAProcessingDictationWhenItFailsThenItsShortCauseShowsBriefly(
 
     // Then
     let step = OverlayStep(display: .notice(scenario.1), dissolveAfter: 1.5)
-    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+    #expect(reaction.step == step)
+    #expect(reaction.sound == nil)
+}
+
+@Test func givenAProcessingDictationWhenInsertionFailsEntirelyThenTheManualPasteNoticeIsRaised() {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+    _ = machine.handle(.inserting)
+
+    // When
+    let reaction = machine.handle(.failed(reason: .insertionFailed))
+
+    // Then: the text stayed on the pasteboard — an action is required
+    let notice = UserNotice(
+        title: "Insertion failed", body: "Text copied — paste with ⌘V",
+        identifier: "calamo.insertion-last-resort")
+    #expect(reaction.notice == notice)
+}
+
+@Test(arguments: [
+    FailureReason.emptyDictation, .secureField, .transcriptionFailed, .micUnavailable,
+    .permissionRevoked,
+])
+func givenAnyOtherFailureWhenItIsReportedThenNoNotificationIsRaised(reason: FailureReason) {
+    // Given
+    var machine = FeedbackMachine()
+    _ = machine.handle(.capturing)
+
+    // When
+    let reaction = machine.handle(.failed(reason: reason))
+
+    // Then: no action required — the overlay notice is the whole feedback
+    #expect(reaction.notice == nil)
 }
 
 @Test func givenACapturingDictationWhenTheMicFailsThenTheEndSoundStillPlays() {

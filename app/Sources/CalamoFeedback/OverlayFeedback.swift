@@ -34,9 +34,11 @@ public enum SoundCue: Equatable, Sendable {
 public struct FeedbackReaction: Equatable, Sendable {
     public let step: OverlayStep
     public let sound: SoundCue?
+    public let notice: UserNotice?
 
-    public init(step: OverlayStep, sound: SoundCue?) {
+    public init(step: OverlayStep, sound: SoundCue?, notice: UserNotice? = nil) {
         self.step = step
         self.sound = sound
+        self.notice = notice
     }
 }

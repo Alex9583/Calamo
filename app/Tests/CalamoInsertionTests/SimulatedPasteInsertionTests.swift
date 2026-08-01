@@ -1,26 +1,30 @@
 import AppKit
-import CalamoCore
 import Testing
 
 @testable import CalamoInsertion
 
-@Test func givenACopiedTextWhenADictationIsInsertedThenTheClipboardIsRestoredAfterTheDelay()
+@Test func givenACopiedTextWhenADictationIsPastedThenTheClipboardIsRestoredAfterTheDelay()
     async throws
 {
     // Given: the user's real clipboard, put back once the test is done
     let pasteboard = NSPasteboard.general
     let before = PasteboardSnapshot.capture(from: pasteboard)
-    defer { before.restore(to: pasteboard) }
-    pasteboard.clearContents()
-    pasteboard.setString("previously copied", forType: .string)
+    defer { onMainSync { before.restore(to: pasteboard) } }
+    onMainSync {
+        pasteboard.clearContents()
+        pasteboard.setString("previously copied", forType: .string)
+    }
     let insertion = SimulatedPasteInsertion(
         pasteboard: pasteboard, restoreDelay: 0.05, paste: { true })
 
     // When
-    try insertion.insert(text: "Première ligne — déjà vu, garçon, cœur.\nDeuxième ligne.")
+    let pasted = onMainSync {
+        insertion.attempt("Première ligne — déjà vu, garçon, cœur.\nDeuxième ligne.")
+    }
     try await Task.sleep(for: .milliseconds(500))
 
     // Then
+    #expect(pasted)
     #expect(pasteboard.string(forType: .string) == "previously copied")
 }
 
@@ -41,7 +45,7 @@ import Testing
         })
 
     // When
-    try insertion.insert(text: "dictated")
+    _ = onMainSync { insertion.attempt("dictated") }
 
     // Then
     #expect(textAtPaste == "dictated")
@@ -49,9 +53,25 @@ import Testing
     #expect(typesAtPaste.contains(NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")))
 }
 
-@Test func givenAPasteThatCannotBePostedWhenInsertingThenTheDictationStaysOnThePasteboard()
-    async throws
-{
+@Test func givenAFailedPasteWhenAFallbackInsertedTheTextThenTheUsersCopyComesBack() throws {
+    // Given
+    let pasteboard = scratchPasteboard()
+    defer { pasteboard.releaseGlobally() }
+    pasteboard.clearContents()
+    pasteboard.setString("previously copied", forType: .string)
+    let insertion = SimulatedPasteInsertion(
+        pasteboard: pasteboard, restoreDelay: 0.05, paste: { false })
+
+    // When: the paste fails, then the cascade reports a fallback success
+    let pasted = onMainSync { insertion.attempt("dictated") }
+    onMainSync { insertion.restoreAbandonedSnapshot() }
+
+    // Then
+    #expect(!pasted)
+    #expect(pasteboard.string(forType: .string) == "previously copied")
+}
+
+@Test func givenAFailedPasteWhenTheCascadeLeavesTheTextThenItStaysWithoutTransientMarks() throws {
     // Given
     let pasteboard = scratchPasteboard()
     defer { pasteboard.releaseGlobally() }
@@ -61,13 +81,14 @@ import Testing
         pasteboard: pasteboard, restoreDelay: 0.05, paste: { false })
 
     // When
-    #expect(throws: InsertionError.self) {
-        try insertion.insert(text: "dictated")
-    }
-    try await Task.sleep(for: .milliseconds(300))
+    _ = onMainSync { insertion.attempt("dictated") }
+    onMainSync { insertion.leaveTextForManualPaste("dictated") }
 
-    // Then: recoverable by hand with Cmd-V — restoring would erase it
+    // Then: recoverable by hand with Cmd-V, visible to clipboard managers
     #expect(pasteboard.string(forType: .string) == "dictated")
+    let types = pasteboard.pasteboardItems?.first?.types ?? []
+    #expect(!types.contains(NSPasteboard.PasteboardType("org.nspasteboard.TransientType")))
+    #expect(!types.contains(NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")))
 }
 
 @Test func givenAUserCopyDuringTheRestoreWindowWhenTheRestoreFiresThenTheUsersCopyIsPreserved()
@@ -82,9 +103,11 @@ import Testing
         pasteboard: pasteboard, restoreDelay: 0.2, paste: { true })
 
     // When: the user copies before the deferred restore fires
-    try insertion.insert(text: "dictated")
-    pasteboard.clearContents()
-    pasteboard.setString("user copy", forType: .string)
+    _ = onMainSync { insertion.attempt("dictated") }
+    onMainSync {
+        pasteboard.clearContents()
+        pasteboard.setString("user copy", forType: .string)
+    }
     try await Task.sleep(for: .milliseconds(700))
 
     // Then
@@ -103,45 +126,14 @@ import Testing
         pasteboard: pasteboard, restoreDelay: 0.2, paste: { true })
 
     // When
-    try insertion.insert(text: "first dictation")
-    try insertion.insert(text: "second dictation")
+    _ = onMainSync { insertion.attempt("first dictation") }
+    _ = onMainSync { insertion.attempt("second dictation") }
     try await Task.sleep(for: .milliseconds(700))
 
     // Then: not "first dictation" — the held snapshot carried over
     #expect(pasteboard.string(forType: .string) == "previously copied")
 }
 
-@Test func givenACallFromThePipelineThreadWhenInsertingThenPasteboardWorkRunsOnTheMainQueue()
-    async throws
-{
-    // Given
-    let pasteboard = scratchPasteboard()
-    defer { pasteboard.releaseGlobally() }
-    var pasteWasOnMain = false
-    let insertion = SimulatedPasteInsertion(
-        pasteboard: pasteboard, restoreDelay: 0.05,
-        paste: {
-            pasteWasOnMain = Thread.isMainThread
-            return true
-        })
-
-    // When: called from a plain thread, as the engine's pipeline thread does
-    let done = DispatchSemaphore(value: 0)
-    Thread.detachNewThread {
-        try? insertion.insert(text: "dictated")
-        done.signal()
-    }
-    await withCheckedContinuation { continuation in
-        DispatchQueue.global().async {
-            done.wait()
-            continuation.resume()
-        }
-    }
-
-    // Then
-    #expect(pasteWasOnMain)
-}
-
-private func scratchPasteboard() -> NSPasteboard {
+func scratchPasteboard() -> NSPasteboard {
     NSPasteboard(name: NSPasteboard.Name("dev.calamo.tests.\(UUID().uuidString)"))
 }
