@@ -17,6 +17,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     private var transcription: DeferredTranscription?
     private var dictionaryWatcher: DictionaryWatcher?
     private var menuBar: MenuBarController?
+    private var settings: SettingsController?
 
     static func main() {
         let app = NSApplication.shared
@@ -34,14 +35,24 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
             observer: Self.makeObserver(menuBar: menuBar, overlay: overlay, trace: trace),
             transcription: transcription)
         menuBar.perform = { [weak self] in self?.perform($0) }
+        menuBar.openSettings = { [weak self] in self?.showSettings() }
         (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
-        input = PushToTalkInput(sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
+        input = PushToTalkInput(
+            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
+            binding: HotkeyPreference.load(),
+            captureDevice: { MicrophonePreference.currentDeviceID() })
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
         Self.requestPermissions()
         if input?.start() != true {
             NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
         }
         ModelLoader.start(engine: engine, transcription: transcription)
+    }
+
+    private func showSettings() {
+        guard let input else { return }
+        if settings == nil { settings = SettingsController(input: input) }
+        settings?.show()
     }
 
     private func perform(_ action: StatusAction) {

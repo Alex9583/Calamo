@@ -8,6 +8,7 @@ import CalamoFeedback
 @MainActor
 final class MenuBarController: NSObject, NSMenuDelegate {
     var perform: (StatusAction) -> Void = { _ in }
+    var openSettings: () -> Void = {}
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let statusLine = NSMenuItem()
@@ -40,9 +41,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         statusLine.action = #selector(statusLineClicked)
         menu.addItem(statusLine)
         menu.addItem(item("Dictionary…", action: #selector(openDictionary)))
-        let settings = NSMenuItem(title: "Settings…", action: nil, keyEquivalent: "")
-        settings.isEnabled = false  // The settings window arrives with ticket 16.
-        menu.addItem(settings)
+        menu.addItem(item("Settings…", action: #selector(settingsClicked)))
         menu.addItem(.separator())
         let quit = NSMenuItem(
             title: "Quit Calamo", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -103,6 +102,10 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     @objc private func openDictionary() {
         DictionaryFile.open()
+    }
+
+    @objc private func settingsClicked() {
+        openSettings()
     }
 }
 

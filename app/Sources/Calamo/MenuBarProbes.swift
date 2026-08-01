@@ -11,7 +11,8 @@ enum MenuBarProbes {
             engine: engine,
             accessibilityGranted: AXIsProcessTrusted(),
             microphoneGranted: microphoneGranted(),
-            secureInputActive: IsSecureEventInputEnabled())
+            secureInputActive: IsSecureEventInputEnabled(),
+            hotkeyLabel: HotkeyPreference.load().label)
     }
 
     /// notDetermined counts as granted: the system prompt is still pending

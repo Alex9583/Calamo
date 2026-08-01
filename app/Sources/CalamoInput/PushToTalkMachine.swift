@@ -1,5 +1,5 @@
 public enum HotkeyEvent: Equatable, Sendable {
-    case fnChanged(isDown: Bool)
+    case hotkeyChanged(isDown: Bool)
     case otherKey
     case tapDisabled
 }
@@ -30,10 +30,10 @@ public struct PushToTalkMachine: Sendable {
 
     public mutating func handle(_ event: HotkeyEvent) -> HotkeyReaction {
         switch event {
-        case .fnChanged(isDown: true):
+        case .hotkeyChanged(isDown: true):
             defer { isHolding = true }
             return HotkeyReaction(actions: isHolding ? [] : [.beginDictation], swallowsEvent: true)
-        case .fnChanged(isDown: false):
+        case .hotkeyChanged(isDown: false):
             defer { isHolding = false }
             return HotkeyReaction(actions: isHolding ? [.endDictation] : [], swallowsEvent: true)
         case .otherKey:

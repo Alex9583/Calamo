@@ -1,8 +1,6 @@
 import AppKit
 import CalamoFeedback
 
-/// Discreet capture chimes; ticket 16 surfaces the checkbox — the flag and
-/// its on-by-default reading already live here.
 struct DictationSounds {
     static let defaultsKey = "dictationSounds"
 

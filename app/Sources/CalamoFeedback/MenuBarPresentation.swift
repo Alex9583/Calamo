@@ -30,15 +30,17 @@ public struct MenuBarSnapshot: Equatable, Sendable {
     public let accessibilityGranted: Bool
     public let microphoneGranted: Bool
     public let secureInputActive: Bool
+    public let hotkeyLabel: String
 
     public init(
         engine: EngineState, accessibilityGranted: Bool, microphoneGranted: Bool,
-        secureInputActive: Bool
+        secureInputActive: Bool, hotkeyLabel: String
     ) {
         self.engine = engine
         self.accessibilityGranted = accessibilityGranted
         self.microphoneGranted = microphoneGranted
         self.secureInputActive = secureInputActive
+        self.hotkeyLabel = hotkeyLabel
     }
 }
 
@@ -88,7 +90,8 @@ public struct MenuBarPresentation: Equatable, Sendable {
                 status: StatusLine(label: "Secure input active — dictation muted"))
         case .ready:
             MenuBarPresentation(
-                icon: .ready, status: StatusLine(label: "Ready — hold Fn to dictate"))
+                icon: .ready,
+                status: StatusLine(label: "Ready — hold \(snapshot.hotkeyLabel) to dictate"))
         }
     }
 }

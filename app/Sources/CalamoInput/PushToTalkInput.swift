@@ -1,32 +1,84 @@
+import CoreAudio
 import Foundation
 
-/// Wires tap → machine → capture → sink. Tap callbacks stay instant: the
+/// Wires tap → interpreter → machine → capture → sink, or tap → recorder
+/// while a shortcut is being recorded. Tap callbacks stay instant: the
 /// decision is pure, side effects run on a serial queue.
 ///
-/// @unchecked: `machine` and `tap` are main-run-loop confined (start + tap
+/// @unchecked: `machine`, `interpreter`, `recording` and `tap` are
+/// main-run-loop confined (start, rebind, recording control + tap
 /// callbacks), `capture` is confined to the serial queue.
 public final class PushToTalkInput: @unchecked Sendable {
     private let sink: DictationInputSink
     private let queue = DispatchQueue(label: "com.calamo.push-to-talk")
     private var machine = PushToTalkMachine()
-    private var tap: FnKeyTap?
+    private var interpreter: BindingInterpreter
+    private var recording:
+        (recorder: BindingRecorder, onVerdict: (BindingRecorder.Verdict) -> Void)?
+    private var tap: HotkeyTap?
     private let capture = AudioCapture()
+    private let captureDevice: @Sendable () -> AudioDeviceID?
 
-    public init(sink: DictationInputSink) {
+    public init(
+        sink: DictationInputSink, binding: HotkeyBinding,
+        captureDevice: @escaping @Sendable () -> AudioDeviceID?
+    ) {
         self.sink = sink
+        self.interpreter = BindingInterpreter(binding: binding)
+        self.captureDevice = captureDevice
     }
 
     public func start() -> Bool {
         guard tap == nil else { return true }
-        tap = FnKeyTap { [weak self] event in
-            guard let self else { return .passthrough }
-            let reaction = self.machine.handle(event)
-            if !reaction.actions.isEmpty {
-                self.queue.async { self.execute(reaction.actions) }
-            }
-            return reaction
+        tap = HotkeyTap { [weak self] event in
+            self?.handle(event) ?? false
         }
         return tap != nil
+    }
+
+    /// Takes effect on the very next tap event; an in-flight hold ends now —
+    /// its release would be invisible to the new binding.
+    public func rebind(to binding: HotkeyBinding) {
+        forceEndHold()
+        interpreter.rebind(to: binding)
+    }
+
+    /// Routes tap events to a fresh recorder until it captures or cancels;
+    /// an in-flight hold ends now and no dictation can start meanwhile.
+    public func beginBindingRecording(onVerdict: @escaping (BindingRecorder.Verdict) -> Void) {
+        forceEndHold()
+        recording = (BindingRecorder(), onVerdict)
+    }
+
+    public func cancelBindingRecording() {
+        recording = nil
+    }
+
+    private func forceEndHold() {
+        let reaction = machine.handle(.hotkeyChanged(isDown: false))
+        if !reaction.actions.isEmpty {
+            queue.async { self.execute(reaction.actions) }
+        }
+    }
+
+    private func handle(_ event: TapEvent) -> Bool {
+        if recording != nil { return handleRecording(event) }
+        let reaction = machine.handle(interpreter.interpret(event))
+        if !reaction.actions.isEmpty {
+            queue.async { self.execute(reaction.actions) }
+        }
+        return reaction.swallowsEvent && interpreter.binding.swallowsEvents
+    }
+
+    private func handleRecording(_ event: TapEvent) -> Bool {
+        guard let reaction = recording?.recorder.handle(event) else { return false }
+        guard reaction.verdict != .recording, let onVerdict = recording?.onVerdict else {
+            return reaction.swallowsEvent
+        }
+        recording = nil
+        if event == .tapDisabled { tap?.reenable() }
+        onVerdict(reaction.verdict)
+        return reaction.swallowsEvent
     }
 
     private func execute(_ actions: [HotkeyAction]) {
@@ -48,7 +100,7 @@ public final class PushToTalkInput: @unchecked Sendable {
     private func startCapture() {
         do {
             let sink = sink
-            try capture.start { chunk in sink.pushAudio(samples: chunk) }
+            try capture.start(deviceID: captureDevice()) { chunk in sink.pushAudio(samples: chunk) }
         } catch let failure as CaptureFailure {
             sink.captureFailed(failure)
         } catch {

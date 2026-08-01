@@ -1,59 +1,59 @@
 import CalamoInput
 import Testing
 
-@Test func givenAnIdleMachineWhenFnGoesDownThenTheDictationBeginsAndTheKeyIsSwallowed() {
+@Test func givenAnIdleMachineWhenTheHotkeyGoesDownThenTheDictationBeginsAndTheKeyIsSwallowed() {
     // Given
     var machine = PushToTalkMachine()
 
     // When
-    let reaction = machine.handle(.fnChanged(isDown: true))
+    let reaction = machine.handle(.hotkeyChanged(isDown: true))
 
     // Then
     #expect(reaction == HotkeyReaction(actions: [.beginDictation], swallowsEvent: true))
 }
 
-@Test func givenAHeldFnWhenTheDownFlagRepeatsThenTheHoldContinuesSilently() {
+@Test func givenAHeldHotkeyWhenTheDownFlagRepeatsThenTheHoldContinuesSilently() {
     // Given
     var machine = PushToTalkMachine()
-    _ = machine.handle(.fnChanged(isDown: true))
+    _ = machine.handle(.hotkeyChanged(isDown: true))
 
     // When: a spurious repeat of the down flag
-    let reaction = machine.handle(.fnChanged(isDown: true))
+    let reaction = machine.handle(.hotkeyChanged(isDown: true))
 
     // Then
     #expect(reaction == HotkeyReaction(actions: [], swallowsEvent: true))
 }
 
-@Test func givenAHeldFnWhenFnGoesUpThenTheDictationEndsAndTheKeyIsSwallowed() {
+@Test func givenAHeldHotkeyWhenTheHotkeyGoesUpThenTheDictationEndsAndTheKeyIsSwallowed() {
     // Given
     var machine = PushToTalkMachine()
-    _ = machine.handle(.fnChanged(isDown: true))
+    _ = machine.handle(.hotkeyChanged(isDown: true))
 
     // When
-    let reaction = machine.handle(.fnChanged(isDown: false))
+    let reaction = machine.handle(.hotkeyChanged(isDown: false))
 
     // Then
     #expect(reaction == HotkeyReaction(actions: [.endDictation], swallowsEvent: true))
 }
 
-@Test func givenAnIdleMachineWhenAStrayFnUpArrivesThenNothingHappensAndTheKeyIsSwallowed() {
+@Test func givenAnIdleMachineWhenAStrayHotkeyUpArrivesThenNothingHappensAndTheKeyIsSwallowed() {
     // Given
     var machine = PushToTalkMachine()
 
     // When: an up flag with no tracked hold, e.g. after a relaunch mid-press
-    let reaction = machine.handle(.fnChanged(isDown: false))
+    let reaction = machine.handle(.hotkeyChanged(isDown: false))
 
     // Then
     #expect(reaction == HotkeyReaction(actions: [], swallowsEvent: true))
 }
 
-@Test func givenAnAccidentalTapWhenFnGoesDownThenUpThenOneDictationBeginsAndEnds() {
+@Test func givenAnAccidentalTapWhenTheHotkeyGoesDownThenUpThenOneDictationBeginsAndEnds() {
     // Given
     var machine = PushToTalkMachine()
 
     // When
-    let onDown = machine.handle(.fnChanged(isDown: true))
-    let onUp = machine.handle(.fnChanged(isDown: false))
+    let onDown = machine.handle(.hotkeyChanged(isDown: true))
+    let onUp = machine.handle(.hotkeyChanged(isDown: false))
 
     // Then: the core classifies the empty capture, the machine stays honest
     #expect(onDown.actions == [.beginDictation])
@@ -71,30 +71,31 @@ import Testing
     #expect(reaction == HotkeyReaction(actions: [], swallowsEvent: false))
 }
 
-@Test func givenAHeldFnWhenAnotherKeyIsPressedThenItPassesThroughAndTheHoldContinues() {
+@Test func givenAHeldHotkeyWhenAnotherKeyIsPressedThenItPassesThroughAndTheHoldContinues() {
     // Given
     var machine = PushToTalkMachine()
-    _ = machine.handle(.fnChanged(isDown: true))
+    _ = machine.handle(.hotkeyChanged(isDown: true))
 
     // When
     let onOtherKey = machine.handle(.otherKey)
-    let onRelease = machine.handle(.fnChanged(isDown: false))
+    let onRelease = machine.handle(.hotkeyChanged(isDown: false))
 
     // Then
     #expect(onOtherKey == HotkeyReaction(actions: [], swallowsEvent: false))
     #expect(onRelease.actions == [.endDictation])
 }
 
-@Test func givenAHeldFnWhenTheTapIsDisabledByTimeoutThenItRearmsAndTheDictationEnds() {
+@Test func givenAHeldHotkeyWhenTheTapIsDisabledByTimeoutThenItRearmsAndTheDictationEnds() {
     // Given
     var machine = PushToTalkMachine()
-    _ = machine.handle(.fnChanged(isDown: true))
+    _ = machine.handle(.hotkeyChanged(isDown: true))
 
     // When
     let reaction = machine.handle(.tapDisabled)
 
     // Then: the release may have been lost while the tap was off
-    #expect(reaction == HotkeyReaction(actions: [.reenableTap, .endDictation], swallowsEvent: false))
+    #expect(
+        reaction == HotkeyReaction(actions: [.reenableTap, .endDictation], swallowsEvent: false))
 }
 
 @Test func givenAnIdleMachineWhenTheTapIsDisabledByTimeoutThenItOnlyRearms() {
@@ -108,14 +109,14 @@ import Testing
     #expect(reaction == HotkeyReaction(actions: [.reenableTap], swallowsEvent: false))
 }
 
-@Test func givenAHoldEndedByTimeoutWhenFnGoesDownAgainThenANewDictationBegins() {
+@Test func givenAHoldEndedByTimeoutWhenTheHotkeyGoesDownAgainThenANewDictationBegins() {
     // Given
     var machine = PushToTalkMachine()
-    _ = machine.handle(.fnChanged(isDown: true))
+    _ = machine.handle(.hotkeyChanged(isDown: true))
     _ = machine.handle(.tapDisabled)
 
     // When
-    let reaction = machine.handle(.fnChanged(isDown: true))
+    let reaction = machine.handle(.hotkeyChanged(isDown: true))
 
     // Then
     #expect(reaction == HotkeyReaction(actions: [.beginDictation], swallowsEvent: true))

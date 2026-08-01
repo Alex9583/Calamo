@@ -15,13 +15,23 @@ public final class AudioCapture: @unchecked Sendable {
 
     public init() {}
 
-    public func start(onChunk: @escaping @Sendable ([Float]) -> Void) throws {
+    public func start(
+        deviceID: AudioDeviceID?, onChunk: @escaping @Sendable ([Float]) -> Void
+    ) throws {
         try Self.requireMicrophoneAccess()
         let engine = AVAudioEngine()
+        Self.pin(deviceID, on: engine.inputNode)
         let converter = try Self.makeConverter(for: engine.inputNode)
         resetStream(with: converter)
         installTap(on: engine.inputNode, through: converter, onChunk: onChunk)
         try launch(engine)
+    }
+
+    /// A rejected or vanished pinned device leaves the system default in
+    /// place: a dictation never fails because a headset was unplugged.
+    private static func pin(_ deviceID: AudioDeviceID?, on input: AVAudioInputNode) {
+        guard let deviceID else { return }
+        try? input.auAudioUnit.setDeviceID(deviceID)
     }
 
     private static func requireMicrophoneAccess() throws {

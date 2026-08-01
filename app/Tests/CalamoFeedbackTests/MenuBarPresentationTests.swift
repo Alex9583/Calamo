@@ -8,7 +8,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .ready, accessibilityGranted: true, microphoneGranted: true,
-        secureInputActive: false)
+        secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -20,11 +20,24 @@ import Testing
                 icon: .ready, status: StatusLine(label: "Ready — hold Fn to dictate")))
 }
 
+@Test func givenAReboundChordWhenTheEngineIsReadyThenTheLineInvitesWithTheChord() {
+    // Given
+    let snapshot = MenuBarSnapshot(
+        engine: .ready, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "⌃⌥")
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(presentation.status == StatusLine(label: "Ready — hold ⌃⌥ to dictate"))
+}
+
 @Test func givenAllGrantedWhenTheEngineIsLoadingThenTheIconPulsesAndTheLineSaysLoading() {
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .loading, accessibilityGranted: true, microphoneGranted: true,
-        secureInputActive: false)
+        secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -39,7 +52,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .unavailable(cause: .modelsMissing), accessibilityGranted: true,
-        microphoneGranted: true, secureInputActive: false)
+        microphoneGranted: true, secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -57,7 +70,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .ready, accessibilityGranted: true, microphoneGranted: true,
-        secureInputActive: true)
+        secureInputActive: true, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -74,7 +87,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .ready, accessibilityGranted: false, microphoneGranted: true,
-        secureInputActive: false)
+        secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -93,7 +106,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .unavailable(cause: .modelsMissing), accessibilityGranted: false,
-        microphoneGranted: true, secureInputActive: false)
+        microphoneGranted: true, secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -106,7 +119,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .ready, accessibilityGranted: true, microphoneGranted: false,
-        secureInputActive: false)
+        secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -125,7 +138,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .ready, accessibilityGranted: false, microphoneGranted: false,
-        secureInputActive: false)
+        secureInputActive: false, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
@@ -138,7 +151,7 @@ import Testing
     // Given
     let snapshot = MenuBarSnapshot(
         engine: .loading, accessibilityGranted: true, microphoneGranted: true,
-        secureInputActive: true)
+        secureInputActive: true, hotkeyLabel: "Fn")
 
     // When
     let presentation = MenuBarPresentation.derive(from: snapshot)
