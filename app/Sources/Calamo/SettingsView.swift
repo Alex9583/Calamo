@@ -19,7 +19,7 @@ struct SettingsView: View {
             Section("General") { loginToggle }
         }
         .formStyle(.grouped)
-        .frame(width: 440)
+        .frame(width: 440, height: 480)
     }
 
     private var shortcutRow: some View {

@@ -18,7 +18,7 @@ enum DictionaryHotReload {
         } catch let DictionaryLoadError.Invalid(line, message) {
             notifyInvalid(line: line, message: message)
         } catch {
-            NSLog("Calamo: dictionary reload failed: \(error)")
+            NSLog("Calamo: dictionary reload failed: %@", String(describing: error))
         }
     }
 

@@ -27,13 +27,15 @@ enum ModelLoader {
             do {
                 try engine.loadCleanup()
             } catch {
-                NSLog("Calamo: cleanup model not loaded — dictations will degrade: \(error)")
+                NSLog(
+                    "Calamo: cleanup model not loaded — dictations will degrade: %@",
+                    String(describing: error))
             }
             do {
                 transcription.install(try FluidAudioTranscription.load(paths: .defaultCache()))
                 engine.markReady()
             } catch {
-                NSLog("Calamo: ASR models failed to load: \(error)")
+                NSLog("Calamo: ASR models failed to load: %@", String(describing: error))
                 engine.markUnavailable(cause: .modelsMissing)
             }
         }

@@ -15,9 +15,14 @@ final class OverlayController {
 
     init() {
         let hosting = NSHostingView(rootView: OverlayView(model: model))
-        hosting.frame = NSRect(x: 0, y: 0, width: 420, height: 80)
+        // Never let SwiftUI size the panel: the preferred size computed on
+        // a hidden→notice flip shrinks the window before the text is
+        // measured, freezing the pill as an empty 36×40 capsule. The panel
+        // is sized before the view attaches — attaching resizes the view
+        // to the panel, never the other way around.
+        hosting.sizingOptions = []
+        panel.setContentSize(NSSize(width: 420, height: 80))
         panel.contentView = hosting
-        panel.setContentSize(hosting.frame.size)
     }
 
     func apply(_ step: OverlayStep) {

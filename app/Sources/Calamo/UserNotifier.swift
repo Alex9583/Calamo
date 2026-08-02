@@ -7,7 +7,7 @@ import UserNotifications
 enum UserNotifier {
     static func deliver(_ notice: UserNotice) {
         guard Bundle.main.bundleIdentifier != nil else {
-            return NSLog("Calamo: \(notice.title) — \(notice.body)")
+            return NSLog("Calamo: %@ — %@", notice.title, notice.body)
         }
         requestThenAdd(notice)
     }
@@ -15,7 +15,7 @@ enum UserNotifier {
     private static func requestThenAdd(_ notice: UserNotice) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, _ in
             guard granted else {
-                return NSLog("Calamo: (notifications denied) \(notice.title) — \(notice.body)")
+                return NSLog("Calamo: (notifications denied) %@ — %@", notice.title, notice.body)
             }
             let content = UNMutableNotificationContent()
             content.title = notice.title

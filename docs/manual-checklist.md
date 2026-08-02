@@ -18,8 +18,11 @@ quoted exactly — a paraphrased label is a deviation.
 
 - Start clean:
   `tccutil reset Accessibility com.calamo.Calamo && tccutil reset Microphone com.calamo.Calamo`
-- Levers, env read at launch — run the bundled binary directly, e.g.
-  `CALAMO_FORCE_LAST_RESORT=1 build/Calamo.app/Contents/MacOS/Calamo`:
+- Levers, env read at launch. Never exec the binary from a shell — TCC
+  then attributes Accessibility to the shell and the grant is lost.
+  Inject into launchd instead, e.g.
+  `launchctl setenv CALAMO_FORCE_LAST_RESORT 1 && open build/Calamo.app`
+  (then `launchctl unsetenv CALAMO_FORCE_LAST_RESORT` after the step):
   - `CALAMO_PASTE_BLOCKED=<id,id>` — those apps skip paste and take the
     keystroke fallback.
   - `CALAMO_FORCE_LAST_RESORT=1` — both syntheses fail: the only path to
@@ -33,6 +36,9 @@ quoted exactly — a paraphrased label is a deviation.
   models at `~/Library/Application Support/FluidAudio/Models`.
 - Steps marked *(hardware)* need a second input device or a non-Apple
   external keyboard — skip when absent.
+- Rebuilding mid-pass invalidates the Accessibility grant (ad-hoc
+  signature): remove Calamo from the Accessibility pane, then
+  `tccutil reset Accessibility com.calamo.Calamo`, relaunch, re-grant.
 
 ## A — Hotkey: CGEventTap + Accessibility
 
@@ -71,11 +77,12 @@ quoted exactly — a paraphrased label is a deviation.
    Privacy & Security.
    - [ ] Within ~2 s: ⚠︎ icon, « Accessibility permission needed — Open
      System Settings », click → the Accessibility pane.
-   - [ ] The hotkey is inert while revoked — the tap is dead, the refusal
-     surfaces on the menu bar, not the overlay.
-2. Re-grant, relaunch — v1 never recreates a dead tap; automatic grant
-   detection arrives with onboarding (ticket 20).
-   - [ ] Ready again; dictation works.
+   - [ ] The hotkey goes inert and **the system keyboard keeps working**:
+     the tap must be torn down on revocation (ticket 24 — an orphan
+     active tap black-holes all keyboard input until re-grant).
+2. Re-grant.
+   - [ ] Ready again; dictation works — relaunch first until the tap
+     recreate (ticket 24) lands.
 
 ## B — Insertion: the real-app matrix
 
@@ -89,10 +96,14 @@ déjà l'été, ça fonctionne », wait ≥ 1 s.
 | Slack — message box | ☐ | ☐ |
 
 - [ ] Keystroke fallback, once: relaunch with
-  `CALAMO_PASTE_BLOCKED=com.apple.TextEdit`, dictate into TextEdit — the
-  text arrives as keystrokes (visibly slower), the sentinel never
-  touched. (An app that joins `PasteQuirks.standard` — none today — takes
-  this path in production: walk its row without the lever.)
+  `CALAMO_PASTE_BLOCKED=com.apple.TextEdit`, dictate into TextEdit.
+  Speed does not discriminate (≤ 20-unit chunks land in a few events);
+  the pasteboard does: read
+  `swift -e 'import AppKit; print(NSPasteboard.general.changeCount)'`
+  before and after — unchanged = keystrokes (clipboard never touched);
+  a paste bumps it by 2 (write + restore). Contrast with a paste app.
+  (An app that joins `PasteQuirks.standard` — none today — takes this
+  path in production: walk its row without the lever.)
 - [ ] If a clipboard manager runs: the dictated text never enters its
   history.
 - [ ] An app that silently swallows the paste is a deviation: its bundle
@@ -208,7 +219,9 @@ mv "$HOME/Library/Application Support/FluidAudio/Models" \
    `echo 'broken =' >> ~/Library/Application\ Support/com.calamo.Calamo/dictionary.toml`
    - [ ] Notification « Invalid dictionary » — « Line N: … — the previous
      dictionary stays active. » (First notice ever: macOS asks to allow
-     Calamo notifications — allow.)
+     Calamo notifications — allow. No prompt and no notification means
+     the grant was silently denied — ad-hoc resigning does this: enable
+     Calamo under System Settings → Notifications, retrigger.)
    - [ ] An alias still lands as its canonical spelling.
 3. Remove the line, save.
    - [ ] Hot reload, silent, no restart.
