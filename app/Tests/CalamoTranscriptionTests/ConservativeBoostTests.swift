@@ -1,6 +1,21 @@
 import CalamoTranscription
 import Testing
 
+@Test func givenTheConservativePolicyWhenDerivingTheRescorerConfigThenNoPathEscapesTheGlobalGate() {
+    // Given: the acoustic rescue can replace words below any similarity gate
+    let gate = ConservativeBoost.globalMinSimilarity
+
+    // When
+    let config = ConservativeBoost.rescorerConfig
+
+    // Then: rescue off, its floors pinned at the gate, env overrides pinned out
+    #expect(config.spotterRescueEnabled == false)
+    #expect(config.spotterRescueMinSimilarity == gate)
+    #expect(config.spotterRescueMultiWordMinSimilarity == gate)
+    #expect(config.shortTermCbwTaperPivot == 1)
+    #expect(config.shortTermCbwTaperExponent == 2.0)
+}
+
 @Test func givenAnIdentifiedDistractorWhenDerivingItsBoostThresholdThenItIsTightenedTo095() {
     // Given: the common words the prototype saw corrupt transcripts
     let distractors = ["merge", "rebase", "release", "pipeline", "code review", "branch", "commit"]

@@ -103,7 +103,8 @@ extension AsrStack {
         }
         let vocabulary = CustomVocabularyContext(terms: terms, minSimilarity: minSimilarity)
         let rescorer = try await VocabularyRescorer.create(
-            spotter: spotter, vocabulary: vocabulary, ctcModelDirectory: ctcDirectory)
+            spotter: spotter, vocabulary: vocabulary,
+            config: ConservativeBoost.rescorerConfig, ctcModelDirectory: ctcDirectory)
         let boost = Boost(
             entries: entries,
             vocabulary: vocabulary,

@@ -68,6 +68,15 @@ struct TextMetricsTests {
         #expect(TextMetrics.termPresent("reunion", in: "la réunion de demain"))
     }
 
+    @Test func givenRepeatedOccurrencesWhenCountedThenEachBoundaryMatchCounts() {
+        // Then: same alphabet as termPresent, occurrences instead of presence
+        #expect(TextMetrics.termCount("GitHub", in: "GitHub GitHub") == 2)
+        #expect(TextMetrics.termCount("github", in: "regarde le repo sur GitHub") == 1)
+        #expect(TextMetrics.termCount("merge", in: "pense à merger ta pull request") == 0)
+        #expect(TextMetrics.termCount("git hub", in: "le git hub de l'équipe") == 1)
+        #expect(TextMetrics.termCount("Calamo", in: "") == 0)
+    }
+
     @Test func givenIdenticalTextsWhenMeasuredThenEditDistanceIsZero() {
         // Given
         let reference = "Hi team, the deployment is scheduled for tomorrow at nine a.m."

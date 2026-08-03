@@ -30,6 +30,7 @@ struct TranscriptionContract: Decodable {
         let id: String
         let language: String?
         let silenceSeconds: Double?
+        let expectedTerms: [String]?
     }
 
     let audioDirectory: String
@@ -64,6 +65,8 @@ enum GoldenFixtures {
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .appendingPathComponent("fixtures")
+
+    static var repoRoot: URL { directory.deletingLastPathComponent() }
 
     static func decode<T: Decodable>(_ name: String) throws -> T {
         let url = directory.appendingPathComponent(name)

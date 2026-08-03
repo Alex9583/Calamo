@@ -2,7 +2,7 @@
 # Golden suites launcher — calibrated reference machine only, never CI.
 # Rules, thresholds and the re-baseline procedure: docs/golden-suites.md.
 #
-#   scripts/golden.sh [--rite] [asr|cleanup|e2e|all]
+#   scripts/golden.sh [--rite] [asr|cleanup|e2e|live|all]
 #
 # --rite runs the selection 5 consecutive times (the admission rite): every
 # run must be identical — any variance is a bug to diagnose. Rite runs keep
@@ -21,6 +21,7 @@ status=0
 
 asr() { CALAMO_GOLDEN=1 swift test --package-path app --filter AsrGoldenSuite; }
 e2e() { CALAMO_GOLDEN=1 swift test --package-path app --filter E2eGoldenSuite; }
+live() { CALAMO_GOLDEN=1 swift test --package-path app --filter LiveGoldenSuite; }
 cleanup() {
   CALAMO_GOLDEN=1 cargo test --manifest-path core/Cargo.toml -p calamo-adapters \
     --features llama-cleanup --test cleanup_golden -- --nocapture
@@ -32,13 +33,15 @@ run_suite() {
     asr) asr || rc=$? ;;
     cleanup) cleanup || rc=$? ;;
     e2e) e2e || rc=$? ;;
+    live) live || rc=$? ;;
     all)
       asr || rc=$?
       cleanup || rc=$?
       e2e || rc=$?
+      live || rc=$?
       ;;
     *)
-      echo "usage: scripts/golden.sh [--rite] [asr|cleanup|e2e|all]" >&2
+      echo "usage: scripts/golden.sh [--rite] [asr|cleanup|e2e|live|all]" >&2
       exit 2
       ;;
   esac

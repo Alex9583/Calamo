@@ -39,11 +39,17 @@ enum TextMetrics {
     /// Word-boundary presence, case- and accent-insensitive: « merger » does
     /// not contain « merge ».
     static func termPresent(_ term: String, in text: String) -> Bool {
+        termCount(term, in: text) > 0
+    }
+
+    /// Word-boundary occurrences on the same alphabet as termPresent.
+    static func termCount(_ term: String, in text: String) -> Int {
         let term = normAggressive(term)
         let text = normAggressive(text)
-        guard !term.isEmpty, term.count <= text.count else { return false }
+        guard !term.isEmpty, term.count <= text.count else { return 0 }
         return (0...(text.count - term.count))
-            .contains { Array(text[$0..<($0 + term.count)]) == term }
+            .filter { Array(text[$0..<($0 + term.count)]) == term }
+            .count
     }
 
     /// Case-sensitive word-boundary presence on typographically normalized

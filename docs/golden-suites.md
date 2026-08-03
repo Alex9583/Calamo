@@ -1,24 +1,40 @@
 # Golden suites
 
-Three on-demand suites replay the 15-take reference corpus against the real
-pipeline. They never run in CI and never run implicitly: each one requires
-`CALAMO_GOLDEN=1` and the calibrated reference machine — anywhere else a
-requested run fails loudly.
+Four on-demand suites replay the private corpora — the 15-take reference
+corpus and the 6-take live corpus — against the real pipeline. They never
+run in CI and never run implicitly: each one requires `CALAMO_GOLDEN=1` and
+the calibrated reference machine — anywhere else a requested run fails
+loudly.
 
 | Suite | Chain under test | Harness | Launch |
 |---|---|---|---|
 | ASR | audio → RawTranscript (boosted FluidAudio adapter) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh asr` |
 | Cleanup | verbatim → CleanedText (Qwen3.5-2B + SpellingEnforcement) | `core/calamo-adapters/tests/cleanup_golden` | `scripts/golden.sh cleanup` |
 | E2E | audio → inserted text (`DictationEngine`, insertion doubled, reference dictionary hot-edited mid-suite) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh e2e` |
+| Live | audio → RawTranscript (template dictionary boosted over live-condition takes) | `app/Tests/CalamoGoldenTests` | `scripts/golden.sh live` |
 
 Each suite prints a per-take report and asserts two layers:
 
-- **Hard, per take** — exact detected language (ASR, E2E), zero never-spoken
-  terms, exact dictionary spellings (cleanup, E2E). No tolerance.
+- **Hard, per take** — exact detected language (ASR, E2E, live), zero
+  never-spoken terms, exact dictionary spellings (cleanup, E2E); a boosted
+  term appearing more often than the take dictated it (live). No tolerance.
 - **Statistical, literal in `fixtures/*-golden.json`, never recomputed** —
   aggregate WER FR ≤ 8 % and EN ≤ 6.5 % (ASR); normalized Levenshtein
   similarity vs `clean` ≥ 0.90 per take with a budget of 2 takes below
-  (cleanup, E2E).
+  (cleanup, E2E). The live suite has no statistical layer: its checks are
+  absolute.
+
+## The live corpus and the small-dictionary regime
+
+The reference corpus boosts ~51 terms; a real dictionary starts at 3. Below
+FluidAudio's 10-term threshold the rescorer behaves differently (that regime
+once enabled an acoustic rescue that replaced normal words with dictionary
+entries on live audio while every golden suite stayed green). The live
+corpus exists to pin that regime: the shipped template dictionary
+(`live-contract.json` mirrors it, guarded in CI) boosted over short real-mic
+takes recorded in live conditions — fast pace, ambient noise, the exact
+phrases that corrupted in manual passes. Recording recipe and scripts:
+`fixtures/audio/README.md`.
 
 Latency is out of golden scope: the perf harness (ticket 21) owns it.
 

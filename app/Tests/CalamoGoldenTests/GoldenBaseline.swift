@@ -41,7 +41,7 @@ enum GoldenBaseline {
     }
 
     private static func fluidAudioPin() -> String {
-        let resolved = repoRoot().appendingPathComponent("app/Package.resolved")
+        let resolved = GoldenFixtures.repoRoot.appendingPathComponent("app/Package.resolved")
         guard let data = try? Data(contentsOf: resolved),
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let pins = root["pins"] as? [[String: Any]],
@@ -57,7 +57,7 @@ enum GoldenBaseline {
     /// crate's pinned version (the GGUF itself is SHA-pinned by the core and
     /// verified at load, so it needs no pin here).
     static func lockedCrateVersion(_ name: String) -> String {
-        let lock = repoRoot().appendingPathComponent("core/Cargo.lock")
+        let lock = GoldenFixtures.repoRoot.appendingPathComponent("core/Cargo.lock")
         guard let text = try? String(contentsOf: lock, encoding: .utf8) else { return "" }
         var lines = text.split(separator: "\n").makeIterator()
         while let line = lines.next() {
@@ -69,10 +69,6 @@ enum GoldenBaseline {
                 in: CharacterSet(charactersIn: "\""))
         }
         return ""
-    }
-
-    private static func repoRoot() -> URL {
-        GoldenFixtures.directory.deletingLastPathComponent()
     }
 
     /// Absent baseline → bootstrap and announce the rite; present baseline →

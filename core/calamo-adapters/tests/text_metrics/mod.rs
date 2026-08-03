@@ -68,11 +68,21 @@ fn levenshtein<T: PartialEq>(a: &[T], b: &[T]) -> usize {
 /// Word-boundary presence, case- and accent-insensitive: « merger » does not
 /// contain « merge ».
 pub fn term_present(term: &str, text: &str) -> bool {
+    term_count(term, text) > 0
+}
+
+/// Word-boundary occurrences on the same alphabet as term_present.
+pub fn term_count(term: &str, text: &str) -> usize {
     let term = norm_aggressive(term);
     let term: Vec<&str> = term.split_whitespace().collect();
     let text = norm_aggressive(text);
     let text: Vec<&str> = text.split_whitespace().collect();
-    !term.is_empty() && text.windows(term.len()).any(|window| window == term)
+    if term.is_empty() {
+        return 0;
+    }
+    text.windows(term.len())
+        .filter(|window| *window == term)
+        .count()
 }
 
 /// Case-sensitive word-boundary presence on typographically normalized text —

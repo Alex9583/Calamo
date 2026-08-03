@@ -53,24 +53,18 @@ struct AsrGoldenSuite {
         _ contract: TranscriptionContract,
         _ manifest: CorpusManifest
     ) throws -> TakeOutcome {
-        let fixture = try manifest.fixture(vector.id)
-        let samples = try AudioConverter()
-            .resampleAudioFile(path: GoldenFixtures.audioURL(vector.id, in: contract).path)
-        let transcript = try adapter.transcribe(samples: samples, boostList: contract.boostList)
-
-        let language = languageCode(transcript.language)
-        var failures = languageBreach(
-            id: vector.id, detected: language, expected: vector.language, in: transcript.text)
+        let take = try transcribeTake(vector, adapter, contract, manifest)
+        var failures = take.languageFailures
         failures += neverSpokenBreaches(
             contract.neverSpokenTerms,
-            id: vector.id, output: transcript.text, verbatim: fixture.verbatim)
+            id: vector.id, output: take.text, verbatim: take.fixture.verbatim)
         let (distance, referenceCount) = TextMetrics.editDistance04(
-            hypothesis: transcript.text, reference: fixture.verbatim)
+            hypothesis: take.text, reference: take.fixture.verbatim)
         let wer = Double(distance) / Double(max(referenceCount, 1))
-        print("[asr-golden] \(vector.id)  lang \(language)  wer \(String(format: "%.3f", wer))")
+        print("[asr-golden] \(vector.id)  lang \(take.language)  wer \(String(format: "%.3f", wer))")
         failures.forEach { print("[asr-golden]   HARD \($0)") }
         return TakeOutcome(
-            id: vector.id, language: language, text: transcript.text,
+            id: vector.id, language: take.language, text: take.text,
             distance: distance, referenceCount: referenceCount, failures: failures)
     }
 

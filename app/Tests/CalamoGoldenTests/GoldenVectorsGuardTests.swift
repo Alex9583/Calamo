@@ -28,6 +28,52 @@ struct GoldenVectorsGuardTests {
         #expect(!contract.neverSpokenTerms.isEmpty)
     }
 
+    @Test func givenTheCommittedLiveContractWhenDecodedThenItMirrorsTheDictionaryTemplate() throws {
+        // Given: the shipped template literal
+        let source = try String(
+            contentsOf: GoldenFixtures.repoRoot
+                .appendingPathComponent("core/calamo-adapters/src/dictionary.rs"),
+            encoding: .utf8)
+        let template = try #require(rawStringLiteral(in: source))
+
+        // When
+        let contract: TranscriptionContract = try GoldenFixtures.decode("live-contract.json")
+
+        // Then: takes to unroll, every rendered entry line verbatim in the
+        // template, and no extra entry there
+        #expect(!contract.takes.isEmpty)
+        #expect(contract.takes.contains { !($0.expectedTerms ?? []).isEmpty })
+        for line in contract.dictionaryToml().split(separator: "\n").dropFirst().dropLast() {
+            #expect(template.contains(line), "entry drifted from the template: \(line)")
+        }
+        #expect(template.components(separatedBy: "{ text =").count - 1 == contract.boost.entries.count)
+    }
+
+    private func rawStringLiteral(in source: String) -> Substring? {
+        guard let open = source.range(of: "r#\""),
+            let close = source.range(of: "\"#", range: open.upperBound..<source.endIndex)
+        else { return nil }
+        return source[open.upperBound..<close.lowerBound]
+    }
+
+    @Test func givenThePrivateLiveManifestWhenPresentThenTheContractTakesCoverIt() throws {
+        // Given: only the reference machine has the live corpus
+        let contract: TranscriptionContract = try GoldenFixtures.decode("live-contract.json")
+        let manifest: CorpusManifest
+        do {
+            manifest = try GoldenFixtures.manifest(for: contract)
+        } catch CorpusManifest.ManifestError.absent {
+            print("SKIP: private live corpus manifest absent")
+            return
+        }
+
+        // Then
+        #expect(manifest.fixtures.count == contract.takes.count)
+        for vector in contract.takes {
+            #expect(try !manifest.fixture(vector.id).verbatim.isEmpty)
+        }
+    }
+
     @Test func givenThePrivateManifestWhenPresentThenTheContractTakesCoverIt() throws {
         // Given: only the reference machine has the corpus
         let contract: TranscriptionContract = try GoldenFixtures.decode(
