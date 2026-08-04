@@ -22,11 +22,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         super.init()
         statusItem.menu = makeMenu()
         refresh()
-        let poll = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
-            onMain { self?.refresh() }
-        }
-        RunLoop.main.add(poll, forMode: .common)
-        self.poll = poll
+        poll = repeatOnMain(every: 2) { [weak self] in self?.refresh() }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -77,10 +73,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         pulse = nil
         statusItem.button?.alphaValue = 1
         guard active else { return }
-        let timer = Timer(timeInterval: 0.8, repeats: true) { [weak self] _ in
-            onMain { self?.pulseStep() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
+        let timer = repeatOnMain(every: 0.8) { [weak self] in self?.pulseStep() }
         timer.fire()
         pulse = timer
     }

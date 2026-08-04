@@ -14,6 +14,7 @@ import CalamoInsertion
 final class CalamoApp: NSObject, NSApplicationDelegate {
     private var engine: DictationEngine?
     private var input: PushToTalkInput?
+    private var accessibilityPoll: AccessibilityPoll?
     private var transcription: DeferredTranscription?
     private var dictionaryWatcher: DictionaryWatcher?
     private var menuBar: MenuBarController?
@@ -44,8 +45,9 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
         Self.requestPermissions()
         if input?.start() != true {
-            NSLog("Calamo: event tap unavailable — grant Accessibility, then relaunch")
+            NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
         }
+        if let input { accessibilityPoll = AccessibilityPoll(input: input) }
         ModelLoader.start(engine: engine, transcription: transcription)
     }
 

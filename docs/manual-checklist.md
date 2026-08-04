@@ -47,9 +47,9 @@ quoted exactly — a paraphrased label is a deviation.
 1. Reset both permissions, launch.
    - [ ] The microphone and Accessibility prompts appear; **Input
      Monitoring never lists Calamo**.
-2. Grant Accessibility, relaunch (v1 creates the tap at launch).
-   - [ ] Quill icon in the menu bar; once models load:
-     « Ready — hold Fn to dictate ».
+2. Grant Accessibility.
+   - [ ] Within ~2 s the hotkey arms — no relaunch; quill icon in the
+     menu bar; once models load: « Ready — hold Fn to dictate ».
 
 ### A2 Push-to-talk
 
@@ -77,12 +77,17 @@ quoted exactly — a paraphrased label is a deviation.
    Privacy & Security.
    - [ ] Within ~2 s: ⚠︎ icon, « Accessibility permission needed — Open
      System Settings », click → the Accessibility pane.
-   - [ ] The hotkey goes inert and **the system keyboard keeps working**:
-     the tap must be torn down on revocation (ticket 24 — an orphan
-     active tap black-holes all keyboard input until re-grant).
-2. Re-grant.
-   - [ ] Ready again; dictation works — relaunch first until the tap
-     recreate (ticket 24) lands.
+   - [ ] Within ~2 s the hotkey goes inert and **the system keyboard
+     keeps working**: the tap is torn down — an orphan active tap
+     survives revocation and swallows all keyboard input until re-grant.
+2. Re-grant, wait for Ready; start a dictation and flip Accessibility
+   off while still holding Fn.
+   - [ ] Within ~2 s the hold ends on its own — end chime, the pill
+     leaves; the keyboard stays alive. (The insertion may take the last
+     resort: the grant is gone.)
+3. Re-grant.
+   - [ ] Within ~2 s dictation works again — no relaunch; menu bar back
+     to « Ready — hold Fn to dictate ».
 
 ## B — Insertion: the real-app matrix
 

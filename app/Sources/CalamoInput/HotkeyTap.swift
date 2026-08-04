@@ -4,9 +4,8 @@ import CoreGraphics
 /// behind Accessibility alone, never Input Monitoring. The callback answers
 /// whether to swallow the event.
 ///
-/// Not Sendable on purpose (strict-concurrency audit): creation and
-/// callbacks live on the main run loop; `reenable` may arrive from the
-/// push-to-talk queue but only reads `port`, set once in init.
+/// Not Sendable on purpose (strict-concurrency audit): creation, callbacks,
+/// `reenable` and `invalidate` all live on the main run loop.
 public final class HotkeyTap {
     private let onEvent: (TapEvent) -> Bool
     private var port: CFMachPort!
@@ -36,7 +35,16 @@ public final class HotkeyTap {
     }
 
     public func reenable() {
+        guard CFMachPortIsValid(port) else { return }
         CGEvent.tapEnable(tap: port, enable: true)
+    }
+
+    /// Invalidating the port also tears its run loop source out; without
+    /// this an orphan tap outlives every reference through that source.
+    public func invalidate() {
+        guard CFMachPortIsValid(port) else { return }
+        CGEvent.tapEnable(tap: port, enable: false)
+        CFMachPortInvalidate(port)
     }
 
     private func intercept(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {

@@ -6,8 +6,9 @@ import Foundation
 /// decision is pure, side effects run on a serial queue.
 ///
 /// @unchecked: `machine`, `interpreter`, `recording` and `tap` are
-/// main-run-loop confined (start, rebind, recording control + tap
-/// callbacks), `capture` is confined to the serial queue.
+/// main-run-loop confined (start/stop/sync, rebind, recording control +
+/// tap callbacks; `execute` hops back for the tap), `capture` is confined
+/// to the serial queue.
 public final class PushToTalkInput: @unchecked Sendable {
     private let sink: DictationInputSink
     private let queue = DispatchQueue(label: "com.calamo.push-to-talk")
@@ -34,6 +35,24 @@ public final class PushToTalkInput: @unchecked Sendable {
             self?.handle(event) ?? false
         }
         return tap != nil
+    }
+
+    /// An in-flight hold ends as if released — its release could never
+    /// arrive through a dead tap.
+    public func stop() {
+        forceEndHold()
+        tap?.invalidate()
+        tap = nil
+    }
+
+    /// Poll-driven: the tap's existence follows the Accessibility grant;
+    /// a failed recreate retries on the next poll.
+    public func syncTap(trusted: Bool) {
+        switch TapGuard.reconcile(trusted: trusted, tapActive: tap != nil) {
+        case .recreate: _ = start()
+        case .tearDown: stop()
+        case .keep: break
+        }
     }
 
     /// Takes effect on the very next tap event; an in-flight hold ends now —
@@ -92,7 +111,7 @@ public final class PushToTalkInput: @unchecked Sendable {
                 if !remainder.isEmpty { sink.pushAudio(samples: remainder) }
                 sink.hotkeyReleased()
             case .reenableTap:
-                tap?.reenable()
+                DispatchQueue.main.async { self.tap?.reenable() }
             }
         }
     }
