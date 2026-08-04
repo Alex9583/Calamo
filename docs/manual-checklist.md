@@ -65,6 +65,8 @@ quoted exactly — a paraphrased label is a deviation.
 2. Settings… → Hold to dictate → Change…, press Fn.
    - [ ] « Press your shortcut… (Esc cancels) »; recording never starts a
      dictation.
+   - [ ] The capture lands on the release, and the 🌐 system action
+     (emoji picker) never fires from recording Fn.
 3. Record a chord (e.g. ⌃⌥), dictate with it, rebind Fn.
    - [ ] The chord starts and ends dictations; the menu status line names
      the current binding.
