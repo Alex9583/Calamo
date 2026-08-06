@@ -19,6 +19,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     private var dictionaryWatcher: DictionaryWatcher?
     private var menuBar: MenuBarController?
     private var settings: SettingsController?
+    private var store: ModelStore?
 
     static func main() {
         let app = NSApplication.shared
@@ -32,12 +33,14 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         let overlay = OverlayController()
         let menuBar = MenuBarController()
         let transcription = DeferredTranscription()
+        let store = ModelStore(root: ModelStoreLocation.root().path)
         let engine = Self.makeEngine(
             observer: Self.makeObserver(menuBar: menuBar, overlay: overlay, trace: trace),
-            transcription: transcription)
+            transcription: transcription, store: store)
         menuBar.perform = { [weak self] in self?.perform($0) }
         menuBar.openSettings = { [weak self] in self?.showSettings() }
         (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
+        self.store = store
         input = PushToTalkInput(
             sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
             binding: HotkeyPreference.load(),
@@ -48,7 +51,9 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
             NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
         }
         if let input { accessibilityPoll = AccessibilityPoll(input: input) }
-        ModelLoader.start(engine: engine, transcription: transcription)
+        ModelLoader.start(
+            engine: engine, transcription: transcription, store: store,
+            download: Self.downloadSink(menuBar: menuBar))
     }
 
     private func showSettings() {
@@ -65,15 +70,23 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         }
     }
 
-    // Interim retry until the ModelStore (ticket 19) owns downloads.
     private func reloadModels() {
-        guard let engine, let transcription else { return }
-        engine.markLoading()
-        ModelLoader.start(engine: engine, transcription: transcription)
+        guard let engine, let transcription, let store, let menuBar else { return }
+        ModelLoader.start(
+            engine: engine, transcription: transcription, store: store,
+            download: Self.downloadSink(menuBar: menuBar))
+    }
+
+    private static func downloadSink(
+        menuBar: MenuBarController
+    ) -> @Sendable (ModelDownloadProgress?) -> Void {
+        { [weak menuBar] progress in
+            onMain { menuBar?.downloadProgressChanged(progress) }
+        }
     }
 
     private static func makeEngine(
-        observer: DictationObserver, transcription: DeferredTranscription
+        observer: DictationObserver, transcription: DeferredTranscription, store: ModelStore
     ) -> DictationEngine {
         DictationEngine(
             transcription: transcription,
@@ -81,7 +94,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
             observer: observer,
             config: EngineConfig(
                 dictionaryPath: DictionaryFile.url.path,
-                cleanupModelPath: ModelLoader.cleanupModelPath()))
+                cleanupModelPath: ModelLoader.cleanupModelPath(store: store)))
     }
 
     private static func makeObserver(

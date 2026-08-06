@@ -46,7 +46,8 @@ struct InvalidVector {
 }
 
 fn load_contract() -> Contract {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/dictionary-contract.json");
+    let path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/dictionary-contract.json");
     let text = fs::read_to_string(&path).expect("readable dictionary-contract.json");
     serde_json::from_str(&text).expect("well-formed dictionary-contract.json")
 }

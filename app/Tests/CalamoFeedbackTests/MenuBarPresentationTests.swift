@@ -48,6 +48,37 @@ import Testing
             == MenuBarPresentation(icon: .loading, status: StatusLine(label: "Loading models…")))
 }
 
+@Test func givenADownloadInFlightWhenTheEngineIsLoadingThenTheLineCountsReadyModels() {
+    // Given
+    let snapshot = MenuBarSnapshot(
+        engine: .loading, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "Fn",
+        download: ModelDownloadProgress(ready: 1, total: 3))
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(
+        presentation
+            == MenuBarPresentation(
+                icon: .loading, status: StatusLine(label: "Loading models… (1/3)")))
+}
+
+@Test func givenAStaleDownloadCountWhenTheEngineIsReadyThenTheLineIgnoresIt() {
+    // Given: a progress report that outlived its download
+    let snapshot = MenuBarSnapshot(
+        engine: .ready, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "Fn",
+        download: ModelDownloadProgress(ready: 3, total: 3))
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(presentation.status == StatusLine(label: "Ready — hold Fn to dictate"))
+}
+
 @Test func givenAllGrantedWhenModelsAreMissingThenTheWarningShowsAndTheLineOffersRedownload() {
     // Given
     let snapshot = MenuBarSnapshot(

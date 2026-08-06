@@ -2,3 +2,4 @@
 
 pub mod cleanup;
 pub mod dictionary;
+pub mod models;

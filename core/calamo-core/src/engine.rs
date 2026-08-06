@@ -173,7 +173,8 @@ impl DictationEngine {
     }
 
     fn warm_glossary_of(&self, dictionary: &Dictionary) {
-        self.cleanup.warm_glossary(&dictionary.fixed_prompt_glossary());
+        self.cleanup
+            .warm_glossary(&dictionary.fixed_prompt_glossary());
     }
 
     /// Fails the capturing Dictation; the release that follows finds no

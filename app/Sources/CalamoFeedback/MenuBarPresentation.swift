@@ -25,22 +25,35 @@ public struct StatusLine: Equatable, Sendable {
     }
 }
 
+/// Models fully installed so far, as reported by the ModelStore.
+public struct ModelDownloadProgress: Equatable, Sendable {
+    public let ready: Int
+    public let total: Int
+
+    public init(ready: Int, total: Int) {
+        self.ready = ready
+        self.total = total
+    }
+}
+
 public struct MenuBarSnapshot: Equatable, Sendable {
     public let engine: EngineState
     public let accessibilityGranted: Bool
     public let microphoneGranted: Bool
     public let secureInputActive: Bool
     public let hotkeyLabel: String
+    public let download: ModelDownloadProgress?
 
     public init(
         engine: EngineState, accessibilityGranted: Bool, microphoneGranted: Bool,
-        secureInputActive: Bool, hotkeyLabel: String
+        secureInputActive: Bool, hotkeyLabel: String, download: ModelDownloadProgress? = nil
     ) {
         self.engine = engine
         self.accessibilityGranted = accessibilityGranted
         self.microphoneGranted = microphoneGranted
         self.secureInputActive = secureInputActive
         self.hotkeyLabel = hotkeyLabel
+        self.download = download
     }
 }
 
@@ -79,7 +92,8 @@ public struct MenuBarPresentation: Equatable, Sendable {
     private static func derivedFromEngine(_ snapshot: MenuBarSnapshot) -> MenuBarPresentation {
         switch snapshot.engine {
         case .loading:
-            MenuBarPresentation(icon: .loading, status: StatusLine(label: "Loading models…"))
+            MenuBarPresentation(
+                icon: .loading, status: StatusLine(label: loadingLabel(snapshot.download)))
         case .unavailable(cause: .modelsMissing):
             MenuBarPresentation(
                 icon: .unavailable,
@@ -93,5 +107,10 @@ public struct MenuBarPresentation: Equatable, Sendable {
                 icon: .ready,
                 status: StatusLine(label: "Ready — hold \(snapshot.hotkeyLabel) to dictate"))
         }
+    }
+
+    private static func loadingLabel(_ download: ModelDownloadProgress?) -> String {
+        guard let download else { return "Loading models…" }
+        return "Loading models… (\(download.ready)/\(download.total))"
     }
 }

@@ -13,6 +13,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let statusLine = NSMenuItem()
     private var engine = EngineState.loading
+    private var download: ModelDownloadProgress?
     private var presentation: MenuBarPresentation?
     private var poll: Timer?
     private var pulse: Timer?
@@ -52,8 +53,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         return item
     }
 
+    func downloadProgressChanged(_ progress: ModelDownloadProgress?) {
+        download = progress
+        refresh()
+    }
+
     private func refresh() {
-        let derived = MenuBarPresentation.derive(from: MenuBarProbes.snapshot(engine: engine))
+        let derived = MenuBarPresentation.derive(
+            from: MenuBarProbes.snapshot(engine: engine, download: download))
         guard derived != presentation else { return }
         presentation = derived
         apply(derived)

@@ -9,10 +9,12 @@ mod cleanup;
 mod convert;
 mod errors;
 mod facade;
+mod models;
 mod ports;
 mod types;
 
 pub use errors::{CleanupLoadError, DictionaryLoadError, InsertionError, TranscriptionError};
 pub use facade::DictationEngine;
+pub use models::{ModelPaths, ModelStore, ModelStoreError, ModelStoreObserver};
 pub use ports::{DictationObserver, InsertionPort, TranscriptionPort};
 pub use types::*;

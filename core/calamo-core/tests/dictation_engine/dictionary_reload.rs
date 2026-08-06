@@ -43,7 +43,10 @@ fn given_an_edited_dictionary_when_reloaded_then_the_cleanup_glossary_is_warmed(
 
     // Then: the port is hinted before any dictation pays the prefix decode
     assert_eq!(reloaded, Ok(()));
-    assert_eq!(harness.cleanup.warmed_glossaries(), [vec!["Jira".to_string()]]);
+    assert_eq!(
+        harness.cleanup.warmed_glossaries(),
+        [vec!["Jira".to_string()]]
+    );
 }
 
 #[test]

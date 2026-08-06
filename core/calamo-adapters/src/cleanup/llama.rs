@@ -13,10 +13,7 @@ use std::thread::JoinHandle;
 use calamo_core::dictation::RawTranscript;
 use calamo_core::ports::{CleanupError, CleanupPort};
 
-/// `unsloth/Qwen3.5-2B-GGUF` `Qwen3.5-2B-Q4_K_M.gguf`, the model locked by
-/// the cleanup prototype.
-pub const PINNED_GGUF_SHA256: &str =
-    "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223";
+pub use crate::models::catalog::PINNED_GGUF_SHA256;
 
 pub struct LlamaCleanup {
     requests: Option<mpsc::Sender<worker::Request>>,

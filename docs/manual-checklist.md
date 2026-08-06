@@ -29,11 +29,16 @@ quoted exactly — a paraphrased label is a deviation.
     the last resort.
   - `CALAMO_CLEANUP_GGUF=<bad path>` — cleanup never loads: every
     dictation degrades.
+  - `CALAMO_MODELS_DIR=<dir>` — the whole model store redirected: point
+    it at an empty directory to walk a first install without touching
+    the real one.
 - Clipboard sentinel, used throughout: `printf 'témoin' | pbcopy`,
   checked with `pbpaste`.
 - Files: dictionary at
-  `~/Library/Application Support/com.calamo.Calamo/dictionary.toml`, ASR
-  models at `~/Library/Application Support/FluidAudio/Models`.
+  `~/Library/Application Support/com.calamo.Calamo/dictionary.toml`,
+  models at `~/Library/Application Support/com.calamo.Calamo/models`
+  (SHA-256-pinned by the ModelStore; the golden suites keep their own
+  copies in FluidAudio's cache).
 - Steps marked *(hardware)* need a second input device or a non-Apple
   external keyboard — skip when absent.
 - Rebuilding mid-pass invalidates the Accessibility grant (ad-hoc
@@ -201,21 +206,39 @@ app.
 - [ ] Dictation attempt → pill « Microphone access revoked »; nothing
   inserted.
 
-### D6 Models missing
+### D6 Models missing or corrupted
 
-Quit, then launch after:
+The store repairs what it can at launch; « Models missing » only shows
+when repair itself fails, so the walk cuts the network first.
 
-```sh
-mv "$HOME/Library/Application Support/FluidAudio/Models" \
-   "$HOME/Library/Application Support/FluidAudio/Models.aside"
-```
+1. Quit, turn Wi-Fi off, remove one weight, launch:
 
-- [ ] ⚠︎ + « Models missing — Redownload »; dictation attempt → pill
-  « Models missing ».
-- Restore the directory, click the status line.
-  - [ ] Loading, then Ready — the click retries the load; the real
-    download and the corrupted-model path (pinned SHA-256) land with the
-    ModelStore (ticket 19).
+   ```sh
+   mv "$HOME/Library/Application Support/com.calamo.Calamo/models/parakeet-tdt-0.6b-v3/Encoder.mlmodelc/weights/weight.bin"{,.aside}
+   ```
+
+   - [ ] A pulsing attempt, then ⚠︎ + « Models missing — Redownload »;
+     dictation attempt → pill « Models missing ».
+2. Turn Wi-Fi back on, click the status line.
+   - [ ] Pulsing icon + « Loading models… (2/3) » while the weight
+     redownloads (SHA-256 verified), then Ready — no relaunch. Delete
+     the `.aside` copy.
+3. Corrupt a model in place, relaunch:
+
+   ```sh
+   dd if=/dev/urandom conv=notrunc bs=1k count=1 \
+      of="$HOME/Library/Application Support/com.calamo.Calamo/models/parakeet-tdt-0.6b-v3/Encoder.mlmodelc/weights/weight.bin"
+   ```
+
+   - [ ] The launch catches the bad hash and self-heals without a click:
+     pulsing + « Loading models… (2/3) », then Ready.
+4. *(download ~1.9 GB)* First install: quit, launch with
+   `CALAMO_MODELS_DIR` pointing at an empty directory.
+   - [ ] Pulsing + « Loading models… (0/3) » counting up to (3/3) —
+     resume works: quit after (1/3), relaunch, the count reopens at
+     (1/3) and nothing already installed is refetched.
+   - [ ] Then the ANE compile window (still « Loading models… »), then
+     Ready and a successful dictation.
 
 ### D7 Invalid dictionary TOML
 

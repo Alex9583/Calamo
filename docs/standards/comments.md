@@ -1,14 +1,15 @@
 # Comments
 
 Avoid comments by default. A comment earns its place only by stating a
-constraint the code cannot show; it is one short, precise line where
-possible.
+constraint the code cannot show, in as few words as still carry it — never
+ten where three suffice.
 
-- Delete any comment that restates the name, the signature, or what the next
-  line does — including `///` doc comments that paraphrase the item.
+- Delete any comment the nearby code already shows — a restated name or
+  signature, a narrated next line, a summary of the body or data below —
+  including `///` doc comments that paraphrase the item.
 - File headers: core rationale + non-obvious gotchas, nothing the code or its
   error messages already say.
 - Applies everywhere: source, tests, CI workflows, config files, scripts.
 
-**Review check:** quote each comment that fails the rule; propose deletion or
-the one-line replacement.
+**Review check:** read each comment against the surrounding code; quote each
+that fails the rule; propose deletion or the fewest-word replacement.
