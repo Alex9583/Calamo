@@ -71,6 +71,7 @@ enum ModelLoader {
                         asrModels: URL(fileURLWithPath: paths.asrTdtDir),
                         ctcModels: URL(fileURLWithPath: paths.asrCtcDir))))
             engine.markReady()
+            UpdateDetection.recordCompiled()
         } catch {
             NSLog("Calamo: ASR models failed to load: %@", String(describing: error))
             engine.markUnavailable(cause: .modelsMissing)

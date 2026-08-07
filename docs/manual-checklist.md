@@ -32,6 +32,8 @@ quoted exactly — a paraphrased label is a deviation.
   - `CALAMO_MODELS_DIR=<dir>` — the whole model store redirected: point
     it at an empty directory to walk a first install without touching
     the real one.
+  - `CALAMO_ONBOARDING=1` — the wizard shows again even after it was
+    completed.
 - Clipboard sentinel, used throughout: `printf 'témoin' | pbcopy`,
   checked with `pbpaste`.
 - Files: dictionary at
@@ -182,8 +184,7 @@ Quit, relaunch, hold Fn during the loading window (the first seconds).
 - Dictate a long phrase, release, immediately hold again.
   - [ ] Pill « Still processing… », then the wait animation resumes for
     the dictation still in flight.
-- The post-update rendition (« Optimisation après mise à jour… ») lands
-  with ticket 20 and joins this case then.
+- The post-update rendition of this refusal is walked in F3.
 
 ### D4 Cleanup failed → degraded dictation
 
@@ -279,3 +280,64 @@ dictate « texte de dernier recours » into TextEdit.
   exactly two cases notified: D7 and D8.
 - [ ] **Sounds.** Chimes at start and end by default; Settings toggle off
   → silent dictations; on → chimes return.
+
+## F — Onboarding & post-update
+
+The E checks apply here too, except that the wizard window itself is a
+normal, focusable window.
+
+### F1 First-launch wizard *(download ~1.9 GB)*
+
+Quit; make a true first launch: reset both TCC grants per Setup,
+`defaults delete com.calamo.Calamo onboardingDone`, and point
+`CALAMO_MODELS_DIR` at an empty directory. Launch.
+
+- [ ] The wizard opens on « Welcome to Calamo »: « 100% local — nothing
+  ever leaves your Mac. » and the three models with exact sizes; the
+  menu bar already pulses « Loading models… (0/3) » — the download
+  started without a click.
+- [ ] Get Started → Microphone: « Allow Microphone Access » → system
+  prompt → « Microphone allowed » green check, Continue enables.
+- [ ] Accessibility: « Open System Settings » opens the pane; the grant
+  is auto-detected without relaunch → « Accessibility granted ».
+- [ ] Apple keyboard *(skip with a non-Apple external one)*: the same
+  step guides « Press 🌐 key to » → « Do Nothing », with « Open
+  Keyboard Settings » opening the Keyboard pane.
+- [ ] Models: « Downloading models… (n/3) » with sizes and « Downloads
+  resume automatically if interrupted. », then — without a click —
+  « Optimizing for your Mac… » / « One time only — about a minute. »,
+  then « Models ready ».
+- [ ] Try it: click the in-app field, hold Fn, say « hello everyone » —
+  the cleaned text lands in the field and « Dictation works — you're
+  all set. » appears. Finish closes the wizard.
+- [ ] Relaunch: the wizard does not reappear.
+- [ ] Gatekeeper is mentioned nowhere in the app — that story lives on
+  the DMG background and the tap doc (ticket 22).
+
+### F2 Every step skippable
+
+Reset both TCC grants, relaunch with `CALAMO_ONBOARDING=1`; click
+« Later » through all five steps without granting anything.
+
+- [ ] The wizard walks through and closes; no prompt is forced.
+- [ ] The menu bar takes over: ⚠︎ + the missing permission's actionable
+  line — the wizard itself is never re-proposed.
+
+### F3 Post-update ambient recompilation
+
+With the app having reached Ready at least once, simulate an updated
+binary:
+
+```sh
+defaults write com.calamo.Calamo aneCompiledIdentity STALE
+open build/Calamo.app
+```
+
+- [ ] No wizard, no notification: dimmed-pulsing icon and status line
+  « Optimizing after update… (~1 min, once) » until Ready. (The
+  defaults write keeps the walk offline-fast; a real `./build.sh`
+  rebuild — re-grant per Setup — replays the true ~40 s compile.)
+- [ ] Hold Fn during the window → pill « Optimizing after update…
+  (~1 min, once) ».
+- [ ] Once Ready, quit and relaunch → ordinary « Loading models… »; the
+  post-update label does not reappear.

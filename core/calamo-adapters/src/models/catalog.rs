@@ -4,6 +4,8 @@
 
 pub struct ModelSpec {
     pub name: &'static str,
+    /// What the onboarding wizard shows next to the exact size.
+    pub display_name: &'static str,
     pub repo: &'static str,
     /// A commit hash, never a branch.
     pub revision: &'static str,
@@ -37,6 +39,7 @@ pub const GGUF_FILE_NAME: &str = "Qwen3.5-2B-Q4_K_M.gguf";
 pub const CATALOG: &[ModelSpec] = &[
     ModelSpec {
         name: "parakeet-tdt-0.6b-v3",
+        display_name: "Parakeet TDT 0.6B v3",
         repo: "FluidInference/parakeet-tdt-0.6b-v3-coreml",
         revision: "aed02740059203c4a87495924f685de3722ae9ce",
         folder: "parakeet-tdt-0.6b-v3",
@@ -44,6 +47,7 @@ pub const CATALOG: &[ModelSpec] = &[
     },
     ModelSpec {
         name: "parakeet-ctc-110m",
+        display_name: "Parakeet CTC 110M",
         repo: "FluidInference/parakeet-ctc-110m-coreml",
         revision: "accdafd8cf8a2ff1cabe3c11e54416b405d409aa",
         folder: "parakeet-ctc-110m-coreml",
@@ -51,6 +55,7 @@ pub const CATALOG: &[ModelSpec] = &[
     },
     ModelSpec {
         name: "qwen3.5-2b-cleanup",
+        display_name: "Qwen3.5-2B Q4_K_M",
         repo: "unsloth/Qwen3.5-2B-GGUF",
         revision: "f6d5376be1edb4d416d56da11e5397a961aca8ae",
         folder: "",

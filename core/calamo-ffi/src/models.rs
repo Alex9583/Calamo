@@ -23,6 +23,24 @@ pub struct ModelPaths {
     pub cleanup_gguf: String,
 }
 
+/// One pinned model as the onboarding wizard announces it.
+#[derive(Debug, Clone, PartialEq, uniffi::Record)]
+pub struct CatalogModel {
+    pub name: String,
+    pub bytes: u64,
+}
+
+#[uniffi::export]
+pub fn model_catalog() -> Vec<CatalogModel> {
+    catalog::CATALOG
+        .iter()
+        .map(|model| CatalogModel {
+            name: model.display_name.to_string(),
+            bytes: model.files.iter().map(|f| f.size).sum(),
+        })
+        .collect()
+}
+
 #[uniffi::export(with_foreign)]
 pub trait ModelStoreObserver: Send + Sync {
     /// Fires only when downloads happen: opening count, then one per model.

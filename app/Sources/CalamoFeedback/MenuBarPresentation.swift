@@ -43,10 +43,12 @@ public struct MenuBarSnapshot: Equatable, Sendable {
     public let secureInputActive: Bool
     public let hotkeyLabel: String
     public let download: ModelDownloadProgress?
+    public let coldStart: ColdStart
 
     public init(
         engine: EngineState, accessibilityGranted: Bool, microphoneGranted: Bool,
-        secureInputActive: Bool, hotkeyLabel: String, download: ModelDownloadProgress? = nil
+        secureInputActive: Bool, hotkeyLabel: String, download: ModelDownloadProgress? = nil,
+        coldStart: ColdStart = .ordinary
     ) {
         self.engine = engine
         self.accessibilityGranted = accessibilityGranted
@@ -54,6 +56,7 @@ public struct MenuBarSnapshot: Equatable, Sendable {
         self.secureInputActive = secureInputActive
         self.hotkeyLabel = hotkeyLabel
         self.download = download
+        self.coldStart = coldStart
     }
 }
 
@@ -92,8 +95,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
     private static func derivedFromEngine(_ snapshot: MenuBarSnapshot) -> MenuBarPresentation {
         switch snapshot.engine {
         case .loading:
-            MenuBarPresentation(
-                icon: .loading, status: StatusLine(label: loadingLabel(snapshot.download)))
+            MenuBarPresentation(icon: .loading, status: StatusLine(label: loadingLabel(snapshot)))
         case .unavailable(cause: .modelsMissing):
             MenuBarPresentation(
                 icon: .unavailable,
@@ -109,8 +111,11 @@ public struct MenuBarPresentation: Equatable, Sendable {
         }
     }
 
-    private static func loadingLabel(_ download: ModelDownloadProgress?) -> String {
-        guard let download else { return "Loading models…" }
-        return "Loading models… (\(download.ready)/\(download.total))"
+    private static func loadingLabel(_ snapshot: MenuBarSnapshot) -> String {
+        if let download = snapshot.download {
+            return "Loading models… (\(download.ready)/\(download.total))"
+        }
+        if snapshot.coldStart == .postUpdate { return ColdStart.postUpdateNotice }
+        return "Loading models…"
     }
 }

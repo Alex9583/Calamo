@@ -11,8 +11,17 @@ public struct FeedbackMachine {
     /// Display of the dictation still in flight — what a refusal notice
     /// must give the pill back to.
     private var inFlight: OverlayDisplay?
+    private var coldStart: ColdStart
 
-    public init() {}
+    public init(coldStart: ColdStart = .ordinary) {
+        self.coldStart = coldStart
+    }
+
+    /// Ready ends the cold start: later loading cycles are redownloads,
+    /// not the post-update compile.
+    public mutating func handle(engine state: EngineState) {
+        if state == .ready { coldStart = .ordinary }
+    }
 
     public mutating func handle(_ state: DictationState) -> FeedbackReaction {
         let started = !capturing && state == .capturing
@@ -33,7 +42,7 @@ public struct FeedbackMachine {
 
     public func handle(refusal cause: RefusalCause) -> FeedbackReaction {
         let step = OverlayStep(
-            display: .notice(Self.text(for: cause)), dissolveAfter: Self.briefNotice,
+            display: .notice(text(for: cause)), dissolveAfter: Self.briefNotice,
             revertsTo: inFlight
         )
         return FeedbackReaction(step: step, sound: nil)
@@ -74,8 +83,9 @@ public struct FeedbackMachine {
         }
     }
 
-    private static func text(for cause: RefusalCause) -> String {
+    private func text(for cause: RefusalCause) -> String {
         switch cause {
+        case .engineLoading where coldStart == .postUpdate: ColdStart.postUpdateNotice
         case .engineLoading: "Models loading…"
         case .engineUnavailable(cause: .modelsMissing): "Models missing"
         case .pipelineBusy: "Still processing…"

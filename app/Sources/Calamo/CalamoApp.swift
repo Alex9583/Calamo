@@ -2,7 +2,6 @@
 // models load in the background while the engine gates dictation on Ready.
 // AppKit lifecycle: the status item pulses and composes badges, which a
 // MenuBarExtra label cannot render.
-import AVFoundation
 import AppKit
 import CalamoCore
 import CalamoFeedback
@@ -19,6 +18,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     private var dictionaryWatcher: DictionaryWatcher?
     private var menuBar: MenuBarController?
     private var settings: SettingsController?
+    private var onboarding: OnboardingController?
     private var store: ModelStore?
 
     static func main() {
@@ -32,10 +32,11 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         let trace = PipelineTrace.fromEnvironment
         let overlay = OverlayController()
         let menuBar = MenuBarController()
+        menuBar.coldStart = UpdateDetection.coldStart()
         let transcription = DeferredTranscription()
         let store = ModelStore(root: ModelStoreLocation.root().path)
         let engine = Self.makeEngine(
-            observer: Self.makeObserver(menuBar: menuBar, overlay: overlay, trace: trace),
+            observer: makeObserver(menuBar: menuBar, overlay: overlay, trace: trace),
             transcription: transcription, store: store)
         menuBar.perform = { [weak self] in self?.perform($0) }
         menuBar.openSettings = { [weak self] in self?.showSettings() }
@@ -46,14 +47,23 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
             binding: HotkeyPreference.load(),
             captureDevice: { MicrophonePreference.currentDeviceID() })
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
-        Self.requestPermissions()
         if input?.start() != true {
             NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
         }
         if let input { accessibilityPoll = AccessibilityPoll(input: input) }
+        if OnboardingRecord.shouldShow() { showOnboarding() }
         ModelLoader.start(
-            engine: engine, transcription: transcription, store: store,
-            download: Self.downloadSink(menuBar: menuBar))
+            engine: engine, transcription: transcription, store: store, download: downloadSink())
+    }
+
+    /// Before ModelLoader.start: the wizard must not miss the first
+    /// download reports.
+    private func showOnboarding() {
+        let model = OnboardingModel()
+        model.retryModels = { [weak self] in self?.reloadModels() }
+        let controller = OnboardingController(model: model)
+        onboarding = controller
+        controller.show()
     }
 
     private func showSettings() {
@@ -71,17 +81,17 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     }
 
     private func reloadModels() {
-        guard let engine, let transcription, let store, let menuBar else { return }
+        guard let engine, let transcription, let store else { return }
         ModelLoader.start(
-            engine: engine, transcription: transcription, store: store,
-            download: Self.downloadSink(menuBar: menuBar))
+            engine: engine, transcription: transcription, store: store, download: downloadSink())
     }
 
-    private static func downloadSink(
-        menuBar: MenuBarController
-    ) -> @Sendable (ModelDownloadProgress?) -> Void {
-        { [weak menuBar] progress in
-            onMain { menuBar?.downloadProgressChanged(progress) }
+    private func downloadSink() -> @Sendable (ModelDownloadProgress?) -> Void {
+        { [weak self] progress in
+            onMain {
+                self?.menuBar?.downloadProgressChanged(progress)
+                self?.onboarding?.model.downloadChanged(progress)
+            }
         }
     }
 
@@ -97,10 +107,19 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
                 cleanupModelPath: ModelLoader.cleanupModelPath(store: store)))
     }
 
-    private static func makeObserver(
+    private func makeObserver(
         menuBar: MenuBarController, overlay: OverlayController, trace: PipelineTrace?
     ) -> DictationObserver {
-        let feedback = FeedbackObserver(wrapping: menuBar, overlay: overlay)
+        let relay = OnboardingRelay(
+            wrapping: menuBar,
+            onEngineState: { [weak self] state in
+                onMain { self?.onboarding?.model.engineChanged(state) }
+            },
+            onDictationCompleted: { [weak self] in
+                onMain { self?.onboarding?.model.dictationCompleted() }
+            })
+        let feedback = FeedbackObserver(
+            wrapping: relay, overlay: overlay, coldStart: menuBar.coldStart)
         guard let trace else { return feedback }
         return TracingObserver(wrapping: feedback, trace: trace)
     }
@@ -118,13 +137,5 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         return LevelMeteringInputSink(wrapping: sink) { level in
             onMain { overlay.push(level: level) }
         }
-    }
-
-    // Interim flow until onboarding (ticket 20) walks the user through TCC.
-    private static func requestPermissions() {
-        AVCaptureDevice.requestAccess(for: .audio) { _ in }
-        // kAXTrustedCheckOptionPrompt is a C global `var` Swift 6 rejects;
-        // its literal value is API.
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
     }
 }

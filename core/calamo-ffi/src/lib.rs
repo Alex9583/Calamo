@@ -15,6 +15,8 @@ mod types;
 
 pub use errors::{CleanupLoadError, DictionaryLoadError, InsertionError, TranscriptionError};
 pub use facade::DictationEngine;
-pub use models::{ModelPaths, ModelStore, ModelStoreError, ModelStoreObserver};
+pub use models::{
+    model_catalog, CatalogModel, ModelPaths, ModelStore, ModelStoreError, ModelStoreObserver,
+};
 pub use ports::{DictationObserver, InsertionPort, TranscriptionPort};
 pub use types::*;

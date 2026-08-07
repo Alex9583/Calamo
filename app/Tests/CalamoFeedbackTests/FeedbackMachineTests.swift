@@ -172,6 +172,32 @@ func givenAnyDictationAttemptWhenItIsRefusedThenTheCauseShowsBrieflyWithoutASoun
     #expect(reaction == FeedbackReaction(step: step, sound: nil))
 }
 
+@Test func givenAPostUpdateColdStartWhenAPressIsRefusedDuringLoadingThenTheNoticeExplainsIt() {
+    // Given
+    let machine = FeedbackMachine(coldStart: .postUpdate)
+
+    // When
+    let reaction = machine.handle(refusal: .engineLoading)
+
+    // Then: same message as the menu bar line
+    let step = OverlayStep(
+        display: .notice("Optimizing after update… (~1 min, once)"), dissolveAfter: 1.5)
+    #expect(reaction == FeedbackReaction(step: step, sound: nil))
+}
+
+@Test func givenAPostUpdateColdStartWhenTheEngineWasReadyOnceThenALaterRefusalSaysLoading() {
+    // Given: the post-update compile completed; a redownload cycle follows
+    var machine = FeedbackMachine(coldStart: .postUpdate)
+    machine.handle(engine: .ready)
+    machine.handle(engine: .loading)
+
+    // When
+    let reaction = machine.handle(refusal: .engineLoading)
+
+    // Then
+    #expect(reaction.step.display == .notice("Models loading…"))
+}
+
 @Test func givenACompletedDictationWhenANewCaptureBeginsThenTheStartSoundPlaysAgain() {
     // Given
     var machine = FeedbackMachine()

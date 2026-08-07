@@ -9,6 +9,7 @@ import CalamoFeedback
 final class MenuBarController: NSObject, NSMenuDelegate {
     var perform: (StatusAction) -> Void = { _ in }
     var openSettings: () -> Void = {}
+    var coldStart = ColdStart.ordinary
 
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let statusLine = NSMenuItem()
@@ -60,7 +61,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     private func refresh() {
         let derived = MenuBarPresentation.derive(
-            from: MenuBarProbes.snapshot(engine: engine, download: download))
+            from: MenuBarProbes.snapshot(engine: engine, download: download, coldStart: coldStart))
         guard derived != presentation else { return }
         presentation = derived
         apply(derived)
@@ -117,6 +118,7 @@ extension MenuBarController: DictationObserver {
     nonisolated func engineStateChanged(state: EngineState) {
         onMain {
             self.engine = state
+            if state == .ready { self.coldStart = .ordinary }
             self.refresh()
         }
     }

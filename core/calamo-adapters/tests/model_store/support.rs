@@ -11,6 +11,7 @@ use calamo_adapters::models::store::{FileMeta, ModelStorage, PortError, RemoteFi
 pub const TEST_CATALOG: &[ModelSpec] = &[
     ModelSpec {
         name: "alpha",
+        display_name: "Alpha",
         repo: "acme/alpha",
         revision: "rev-alpha",
         folder: "alpha-dir",
@@ -29,6 +30,7 @@ pub const TEST_CATALOG: &[ModelSpec] = &[
     },
     ModelSpec {
         name: "beta",
+        display_name: "Beta",
         repo: "acme/beta",
         revision: "rev-beta",
         folder: "",

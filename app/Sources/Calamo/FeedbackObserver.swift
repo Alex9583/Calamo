@@ -9,11 +9,12 @@ final class FeedbackObserver: DictationObserver, @unchecked Sendable {
     private let overlay: OverlayController
     private let sounds = DictationSounds()
     private let lock = NSLock()
-    private var machine = FeedbackMachine()
+    private var machine: FeedbackMachine
 
-    init(wrapping wrapped: DictationObserver, overlay: OverlayController) {
+    init(wrapping wrapped: DictationObserver, overlay: OverlayController, coldStart: ColdStart) {
         self.wrapped = wrapped
         self.overlay = overlay
+        machine = FeedbackMachine(coldStart: coldStart)
     }
 
     func dictationStateChanged(dictation: UInt64, state: DictationState) {
@@ -27,6 +28,9 @@ final class FeedbackObserver: DictationObserver, @unchecked Sendable {
     }
 
     func engineStateChanged(state: EngineState) {
+        lock.lock()
+        machine.handle(engine: state)
+        lock.unlock()
         wrapped.engineStateChanged(state: state)
     }
 

@@ -87,6 +87,7 @@ fn given_a_written_stamp_when_read_back_then_it_is_identical() {
 const DISK_CATALOG: &[ModelSpec] = &[
     ModelSpec {
         name: "alpha",
+        display_name: "Alpha",
         repo: "acme/alpha",
         revision: "rev",
         folder: "alpha-dir",
@@ -98,6 +99,7 @@ const DISK_CATALOG: &[ModelSpec] = &[
     },
     ModelSpec {
         name: "beta",
+        display_name: "Beta",
         repo: "acme/beta",
         revision: "rev",
         folder: "",

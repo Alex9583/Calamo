@@ -178,6 +178,50 @@ import Testing
     #expect(presentation.status.action == .openAccessibilitySettings)
 }
 
+@Test func givenAPostUpdateColdStartWhenTheEngineIsLoadingThenTheLineExplainsTheOptimization() {
+    // Given: the binary changed — the ANE caches recompile
+    let snapshot = MenuBarSnapshot(
+        engine: .loading, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "Fn", coldStart: .postUpdate)
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(
+        presentation
+            == MenuBarPresentation(
+                icon: .loading,
+                status: StatusLine(label: "Optimizing after update… (~1 min, once)")))
+}
+
+@Test func givenAPostUpdateColdStartWhenADownloadIsInFlightThenTheDownloadCountWins() {
+    // Given: an update that also ships new model files
+    let snapshot = MenuBarSnapshot(
+        engine: .loading, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "Fn",
+        download: ModelDownloadProgress(ready: 2, total: 3), coldStart: .postUpdate)
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(presentation.status == StatusLine(label: "Loading models… (2/3)"))
+}
+
+@Test func givenAPostUpdateColdStartWhenTheEngineIsReadyThenTheLineInvitesDictation() {
+    // Given
+    let snapshot = MenuBarSnapshot(
+        engine: .ready, accessibilityGranted: true, microphoneGranted: true,
+        secureInputActive: false, hotkeyLabel: "Fn", coldStart: .postUpdate)
+
+    // When
+    let presentation = MenuBarPresentation.derive(from: snapshot)
+
+    // Then
+    #expect(presentation.status == StatusLine(label: "Ready — hold Fn to dictate"))
+}
+
 @Test func givenALoadingEngineWhenSecureInputIsActiveThenLoadingStillShows() {
     // Given
     let snapshot = MenuBarSnapshot(
