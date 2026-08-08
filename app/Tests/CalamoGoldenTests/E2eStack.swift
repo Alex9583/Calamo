@@ -21,6 +21,16 @@ struct E2eStack {
         let insertion = CapturingInsertion()
         let observer = TerminalObserver()
         let dictionaryURL = try writtenDictionary(dictionary)
+        let engine = try loadedEngine(
+            dictionaryURL: dictionaryURL, insertion: insertion, observer: observer)
+        return E2eStack(
+            engine: engine, insertion: insertion, observer: observer, dictionaryURL: dictionaryURL)
+    }
+
+    /// The app's assembly with the shell adapters swapped for the suite's.
+    static func loadedEngine(
+        dictionaryURL: URL, insertion: InsertionPort, observer: DictationObserver
+    ) throws -> DictationEngine {
         let engine = DictationEngine(
             transcription: try FluidAudioTranscription.load(paths: .defaultCache()),
             insertion: insertion,
@@ -28,8 +38,16 @@ struct E2eStack {
             config: EngineConfig(dictionaryPath: dictionaryURL.path, cleanupModelPath: ggufPath()))
         try engine.loadCleanup()
         engine.markReady()
-        return E2eStack(
-            engine: engine, insertion: insertion, observer: observer, dictionaryURL: dictionaryURL)
+        return engine
+    }
+
+    static func feed(_ samples: [Float], into engine: DictationEngine) {
+        var start = 0
+        while start < samples.count {
+            let end = min(start + 1600, samples.count)
+            engine.pushAudio(samples: Array(samples[start..<end]))
+            start = end
+        }
     }
 
     /// The user's hot edit: save the TOML, the shell relays the change.
@@ -38,7 +56,7 @@ struct E2eStack {
         try engine.reloadDictionary()
     }
 
-    private static func writtenDictionary(_ toml: String) throws -> URL {
+    static func writtenDictionary(_ toml: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("calamo-e2e-\(UUID().uuidString)")
             .appendingPathComponent("dictionary.toml")
@@ -55,12 +73,7 @@ struct E2eStack {
 
     func dictate(_ samples: [Float]) throws -> String {
         engine.hotkeyPressed()
-        var start = 0
-        while start < samples.count {
-            let end = min(start + 1600, samples.count)
-            engine.pushAudio(samples: Array(samples[start..<end]))
-            start = end
-        }
+        Self.feed(samples, into: engine)
         engine.hotkeyReleased()
         guard let state = observer.awaitTerminal(seconds: 120) else {
             throw DictationOutcome.timedOut

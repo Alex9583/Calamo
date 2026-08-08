@@ -36,7 +36,8 @@ takes recorded in live conditions — fast pace, ambient noise, the exact
 phrases that corrupted in manual passes. Recording recipe and scripts:
 `fixtures/audio/README.md`.
 
-Latency is out of golden scope: the perf harness (ticket 21) owns it.
+Latency is out of golden scope: the perf harness owns it
+([perf-harness.md](perf-harness.md)).
 
 ## Calibration — the pinned environment
 
