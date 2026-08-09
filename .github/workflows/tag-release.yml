@@ -1,0 +1,58 @@
+# Merging a PR labeled patch / minor / major bumps from the latest v* tag
+# and pushes the next one. Unlabeled PRs and direct pushes to master release 
+# nothing.
+name: Tag release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: tag-release
+
+jobs:
+  tag:
+    if: >-
+      github.event.pull_request.merged &&
+      (contains(github.event.pull_request.labels.*.name, 'major') ||
+       contains(github.event.pull_request.labels.*.name, 'minor') ||
+       contains(github.event.pull_request.labels.*.name, 'patch'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The merge commit, not master HEAD: a direct push landing after
+          # the merge must not slip into the release.
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0 # all v* tags, for the bump base
+          persist-credentials: true
+      - name: Compute the next version and push the tag
+        id: bump
+        env:
+          KIND: >-
+            ${{ contains(github.event.pull_request.labels.*.name, 'major') && 'major'
+             || contains(github.event.pull_request.labels.*.name, 'minor') && 'minor'
+             || 'patch' }}
+        run: |
+          latest="$(git tag --list 'v*' --sort=-v:refname | head -1)"
+          IFS=. read -r major minor patch <<< "${latest:-v0.0.0}"
+          major="${major#v}"
+          case "$KIND" in
+            major) version="$((major + 1)).0.0" ;;
+            minor) version="$major.$((minor + 1)).0" ;;
+            patch) version="$major.$minor.$((patch + 1))" ;;
+          esac
+          git tag "v$version"
+          git push origin "v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Dispatch the release build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: gh workflow run release.yml --ref "v$VERSION"

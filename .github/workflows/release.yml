@@ -1,5 +1,7 @@
-# workflow_dispatch rehearses the same chain into an artifact without
-# publishing. Missing signing secrets must fail the run: letting
+# Tags come from tag-release.yml (merged PR labeled patch / minor /
+# major), which dispatches this workflow at the tag ref; a manual
+# workflow_dispatch from a branch rehearses the same chain into an
+# artifact without publishing. Missing signing secrets must fail: letting
 # create-signing-identity.sh mint a fresh certificate would change the
 # designated requirement and cost every user their TCC grants at the
 # next update.
@@ -76,5 +78,8 @@ jobs:
           Speech recognition by NVIDIA Parakeet models (CC BY 4.0);
           cleanup by Qwen3.5-2B (Apache-2.0).
           EOF
+          # --generate-notes appends GitHub's changelog (merged PRs since
+          # the previous tag) after the install notes.
           gh release create "$GITHUB_REF_NAME" "${DMG[0]}" --verify-tag \
-            --title "Calamo ${GITHUB_REF_NAME#v}" --notes-file /tmp/notes.md
+            --title "Calamo ${GITHUB_REF_NAME#v}" \
+            --notes-file /tmp/notes.md --generate-notes

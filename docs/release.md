@@ -13,11 +13,15 @@ release PR description.
    [manual-checklist.md](manual-checklist.md).
 4. **Real update test** — below; proves the promise the signing strategy
    exists for.
-5. **Tag** — `git tag vX.Y.Z && git push origin vX.Y.Z`. The release
-   workflow builds, signs with the stable identity, packages the DMG and
-   publishes the GitHub Release with its SHA-256
+5. **Tag** — merge the release PR with a `patch` / `minor` / `major`
+   label: tag-release.yml bumps from the latest tag, pushes `vX.Y.Z` and
+   dispatches the release workflow, which builds, signs with the stable
+   identity, packages the DMG and publishes the GitHub Release — its
+   SHA-256 plus the GitHub-generated changelog
    ([distribution.md](distribution.md)). Rehearse beforehand without
-   publishing via the workflow's manual dispatch.
+   publishing via the release workflow's manual dispatch from a branch.
+   Escape hatch: a hand-pushed `git tag vX.Y.Z` still triggers the same
+   build.
 6. **Cask bump** — copy `packaging/homebrew-calamo/` over the
    `Alex9583/homebrew-calamo` repo, set `version` and `sha256` from the
    release notes, push, then `brew update && brew upgrade --cask calamo`
