@@ -9,6 +9,7 @@
 Hold a hotkey, speak, release — the cleaned-up text is inserted at your
 cursor, and not a single byte of audio leaves the machine.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/Alex9583/Calamo?label=Release)](https://github.com/Alex9583/Calamo/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/Alex9583/Calamo/ci.yml?branch=master&label=CI)](https://github.com/Alex9583/Calamo/actions/workflows/ci.yml)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](#install)
@@ -117,6 +118,11 @@ Bug reports and feature requests go to
 [GitHub Issues](https://github.com/Alex9583/Calamo/issues). Code follows
 [CODING_STANDARDS.md](CODING_STANDARDS.md); the canonical glossary
 (ubiquitous language) lives in [CONTEXT.md](CONTEXT.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE). The downloaded models keep their own
+licenses — [docs/distribution.md](docs/distribution.md).
 
 ## Layout
 
