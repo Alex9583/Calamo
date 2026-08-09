@@ -5,6 +5,22 @@ cleaned-up text is inserted at the cursor, and not a single byte of audio
 leaves the machine. The canonical glossary (ubiquitous language) lives in
 [CONTEXT.md](CONTEXT.md).
 
+## Install
+
+Download the latest DMG from the
+[Releases](https://github.com/Alex9583/Calamo/releases) page — drag
+Calamo into /Applications **first**, then walk the Gatekeeper path
+pictured on the DMG (System Settings → Privacy & Security → "Open
+Anyway"). Or:
+
+```sh
+brew tap alex9583/calamo
+brew install --cask calamo
+```
+
+Signing story, tap, model attribution:
+[docs/distribution.md](docs/distribution.md).
+
 ## Build
 
 Prerequisites:
@@ -46,6 +62,10 @@ barrier: SwiftLint, full build chain, clippy + `swift test` on macOS;
 clippy + `cargo test` on Linux (portability). CI never touches models, goldens, or audio fixtures — those
 stay local.
 
+Tags `v*` run [release.yml](.github/workflows/release.yml) — a signed
+DMG published as a GitHub Release; the ritual around it is
+[docs/release.md](docs/release.md).
+
 ## Layout
 
 | Path | Role |
@@ -54,4 +74,5 @@ stay local.
 | `CalamoCore/` | Local SwiftPM package: XCFramework binaryTarget + generated Swift bindings — both written by `build.sh`, never committed |
 | `app/` | The menu bar app (SwiftUI `MenuBarExtra`), consumes `CalamoCore` alongside FluidAudio |
 | `build.sh` | The single dev/CI build chain |
+| `packaging/` | Canonical source of the Homebrew tap (`homebrew-calamo/`) |
 | `fixtures/` | Shared test fixtures (`fixtures/audio/local/` is a private corpus, never committed) |

@@ -17,9 +17,33 @@ struct SettingsView: View {
             Section("Sounds") { soundsToggle }
             Section("Dictionary") { dictionaryButton }
             Section("General") { loginToggle }
+            Section("About") {
+                versionRow
+                attributionText
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 480)
+        .frame(width: 440, height: 560)
+    }
+
+    private var versionRow: some View {
+        LabeledContent(
+            "Version",
+            value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+                as? String ?? "dev")
+    }
+
+    private var attributionText: some View {
+        Text(
+            """
+            Speech recognition by NVIDIA's Parakeet models, used under \
+            [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) \
+            (CoreML conversion by FluidInference). \
+            Cleanup by Qwen3.5-2B (Apache-2.0).
+            """
+        )
+        .font(.callout)
+        .foregroundStyle(.secondary)
     }
 
     private var shortcutRow: some View {

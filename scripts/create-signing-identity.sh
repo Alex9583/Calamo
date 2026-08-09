@@ -76,8 +76,13 @@ echo "Identity created:"
 security find-identity -p codesigning "$KEYCHAIN" | grep -F "$IDENTITY"
 echo
 echo "Sign with:   codesign --force --sign \"$IDENTITY\" <app>"
-echo "Keychain pw: $KEYCHAIN_PASSWORD"
-echo "             (store it — unlocks the keychain after a reboot; if lost, delete"
-echo "             the keychain and re-run: the $SECRETS_DIR backup rebuilds it)"
+# No TTY = CI, whose logs are public: never print the password there.
+if [ -t 1 ]; then
+  echo "Keychain pw: $KEYCHAIN_PASSWORD"
+  echo "             (store it — unlocks the keychain after a reboot; if lost, delete"
+  echo "             the keychain and re-run: the $SECRETS_DIR backup rebuilds it)"
+else
+  echo "Keychain pw: not shown (no TTY); if needed, delete the keychain and re-run"
+fi
 echo "Back up:     $SECRETS_DIR (private key — keep it secret, keep it safe)"
 echo "Remove all:  security delete-keychain \"$KEYCHAIN\"; rm -rf \"$SECRETS_DIR\""

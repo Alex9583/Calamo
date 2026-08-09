@@ -312,7 +312,8 @@ Quit; make a true first launch: reset both TCC grants per Setup,
   all set. » appears. Finish closes the wizard.
 - [ ] Relaunch: the wizard does not reappear.
 - [ ] Gatekeeper is mentioned nowhere in the app — that story lives on
-  the DMG background and the tap doc (ticket 22).
+  the DMG background and the tap caveats
+  ([distribution.md](distribution.md)).
 
 ### F2 Every step skippable
 
