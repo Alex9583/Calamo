@@ -19,11 +19,12 @@ struct SettingsView: View {
             Section("General") { loginToggle }
             Section("About") {
                 versionRow
+                supportText
                 attributionText
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 560)
+        .frame(width: 440, height: 590)
     }
 
     private var versionRow: some View {
@@ -31,6 +32,11 @@ struct SettingsView: View {
             "Version",
             value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
                 as? String ?? "dev")
+    }
+
+    private var supportText: some View {
+        Text("Enjoying Calamo? [Buy me a coffee](https://buymeacoffee.com/alextdev) ☕️")
+            .font(.callout)
     }
 
     private var attributionText: some View {
