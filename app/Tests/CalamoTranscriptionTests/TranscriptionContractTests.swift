@@ -36,7 +36,7 @@ struct TranscriptionPortContract {
     }
 
     @Test(.enabled(if: ReferenceCorpus.isCalibrated), arguments: takes)
-    func givenABoostedCorpusTakeWhenTranscribedThenLanguageAndDictionaryTermsMatchTheVector(
+    func givenABoostedCorpusTakeWhenTranscribedThenDictionaryTermsMatchTheVector(
         vector: ContractVectors.Vector
     ) throws {
         // Given
@@ -50,7 +50,6 @@ struct TranscriptionPortContract {
         let transcript = try adapter.transcribe(samples: samples, boostList: contract.boostList)
 
         // Then
-        #expect(transcript.language == vector.expectedLanguage)
         for term in vector.expectedTerms ?? [] {
             #expect(appears(term, in: transcript.text), "missing “\(term)” in: \(transcript.text)")
         }

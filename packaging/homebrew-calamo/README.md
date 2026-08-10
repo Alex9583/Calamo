@@ -1,6 +1,7 @@
 # Calamo Homebrew tap
 
-Local-only voice dictation for macOS — hold a hotkey, speak, release.
+Local-only, multilingual voice dictation for macOS — hold a hotkey,
+speak, release.
 
 ```sh
 brew tap alex9583/calamo

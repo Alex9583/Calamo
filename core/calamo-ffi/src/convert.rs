@@ -6,8 +6,7 @@ use calamo_core::ports as core_ports;
 
 use crate::errors::DictionaryLoadError;
 use crate::types::{
-    CaptureIncident, DictationState, EngineState, FailureReason, Language, RefusalCause,
-    UnavailabilityCause,
+    CaptureIncident, DictationState, EngineState, FailureReason, RefusalCause, UnavailabilityCause,
 };
 
 impl From<core_ports::DictionaryLoadError> for DictionaryLoadError {
@@ -15,15 +14,6 @@ impl From<core_ports::DictionaryLoadError> for DictionaryLoadError {
         Self::Invalid {
             line: error.line,
             message: error.message,
-        }
-    }
-}
-
-impl From<Language> for core_dictation::Language {
-    fn from(language: Language) -> Self {
-        match language {
-            Language::French => Self::French,
-            Language::English => Self::English,
         }
     }
 }

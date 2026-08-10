@@ -4,15 +4,12 @@
 use std::sync::Arc;
 
 use crate::support::Harness;
-use calamo_core::dictation::Language;
 
 #[test]
 fn given_a_dropped_engine_when_its_drop_returns_then_no_port_reference_survives() {
     // Given: an engine that has processed a dictation
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("un dernier texte", Language::French);
+    harness.transcription.replies_with("un dernier texte");
     let id = harness.dictate(&[0.1, 0.2]);
     harness.observer.wait_terminal(id);
 

@@ -15,9 +15,10 @@ loudly.
 
 Each suite prints a per-take report and asserts two layers:
 
-- **Hard, per take** — exact detected language (ASR, E2E, live), zero
-  never-spoken terms, exact dictionary spellings (cleanup, E2E); a boosted
-  term appearing more often than the take dictated it (live). No tolerance.
+- **Hard, per take** — exact language of the final text (E2E — the cleanup
+  must never translate), zero never-spoken terms, exact dictionary
+  spellings (cleanup, E2E); a boosted term appearing more often than the
+  take dictated it (live). No tolerance.
 - **Statistical, literal in `fixtures/*-golden.json`, never recomputed** —
   aggregate WER FR ≤ 8 % and EN ≤ 6.5 % (ASR); normalized Levenshtein
   similarity vs `clean` ≥ 0.90 per take with a budget of 2 takes below

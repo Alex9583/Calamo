@@ -10,7 +10,6 @@ import Testing
 struct AsrGoldenSuite {
     struct TakeOutcome {
         let id: String
-        let language: String
         let text: String
         let distance: Int
         let referenceCount: Int
@@ -42,8 +41,7 @@ struct AsrGoldenSuite {
         failures += try GoldenBaseline.checkOrBootstrap(
             name: "asr-baseline.json",
             environment: environment(minSimilarity: contract.boost.minSimilarity),
-            outputs: Dictionary(
-                uniqueKeysWithValues: outcomes.map { ($0.id, "[\($0.language)] \($0.text)") }))
+            outputs: Dictionary(uniqueKeysWithValues: outcomes.map { ($0.id, $0.text) }))
         #expect(failures.isEmpty, "\n\(failures.joined(separator: "\n"))")
     }
 
@@ -54,17 +52,16 @@ struct AsrGoldenSuite {
         _ manifest: CorpusManifest
     ) throws -> TakeOutcome {
         let take = try transcribeTake(vector, adapter, contract, manifest)
-        var failures = take.languageFailures
-        failures += neverSpokenBreaches(
+        let failures = neverSpokenBreaches(
             contract.neverSpokenTerms,
             id: vector.id, output: take.text, verbatim: take.fixture.verbatim)
         let (distance, referenceCount) = TextMetrics.editDistance04(
             hypothesis: take.text, reference: take.fixture.verbatim)
         let wer = Double(distance) / Double(max(referenceCount, 1))
-        print("[asr-golden] \(vector.id)  lang \(take.language)  wer \(String(format: "%.3f", wer))")
+        print("[asr-golden] \(vector.id)  wer \(String(format: "%.3f", wer))")
         failures.forEach { print("[asr-golden]   HARD \($0)") }
         return TakeOutcome(
-            id: vector.id, language: take.language, text: take.text,
+            id: vector.id, text: take.text,
             distance: distance, referenceCount: referenceCount, failures: failures)
     }
 

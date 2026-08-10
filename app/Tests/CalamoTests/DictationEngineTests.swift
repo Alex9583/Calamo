@@ -6,7 +6,7 @@ import Testing
 
 final class ScriptedTranscription: TranscriptionPort, @unchecked Sendable {
     func transcribe(samples: [Float], boostList: [BoostEntry]) throws -> RawTranscript {
-        RawTranscript(text: "pousse la branche sur github", language: .french)
+        RawTranscript(text: "pousse la branche sur github")
     }
 }
 

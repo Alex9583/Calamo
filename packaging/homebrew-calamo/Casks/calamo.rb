@@ -7,7 +7,7 @@ cask "calamo" do
 
   url "https://github.com/Alex9583/Calamo/releases/download/v#{version}/Calamo-#{version}.dmg"
   name "Calamo"
-  desc "Local-only voice dictation: hold a key, speak, release"
+  desc "Local-only multilingual voice dictation: hold a key, speak, release"
   homepage "https://github.com/Alex9583/Calamo"
 
   livecheck do

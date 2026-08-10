@@ -2,7 +2,7 @@
 //! failure reaches the observer with its reason — never a silent one.
 
 use crate::support::Harness;
-use calamo_core::dictation::{DictationState, FailureReason, Language};
+use calamo_core::dictation::{DictationState, FailureReason};
 use calamo_core::engine::CaptureIncident;
 
 #[test]
@@ -34,7 +34,7 @@ fn given_no_audio_when_the_hotkey_is_released_then_the_dictation_fails_as_empty(
 fn given_only_silence_when_a_dictation_is_spoken_then_it_fails_as_empty_and_nothing_is_inserted() {
     // Given: audio was captured, but speech recognition heard nothing
     let harness = Harness::ready();
-    harness.transcription.replies_with("  ", Language::French);
+    harness.transcription.replies_with("  ");
 
     // When
     let id = harness.dictate(&[0.0; 1600]);
@@ -54,9 +54,7 @@ fn given_only_silence_when_a_dictation_is_spoken_then_it_fails_as_empty_and_noth
 fn given_a_secure_field_when_a_dictation_is_spoken_then_the_insertion_is_refused() {
     // Given: the focused field is a password field
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("mon mot de passe", Language::French);
+    harness.transcription.replies_with("mon mot de passe");
     harness.insertion.refuses_secure_field();
 
     // When
@@ -76,9 +74,7 @@ fn given_a_secure_field_when_a_dictation_is_spoken_then_the_insertion_is_refused
 fn given_a_broken_insertion_when_a_dictation_is_spoken_then_it_fails_as_insertion_failed() {
     // Given
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("un texte propre", Language::French);
+    harness.transcription.replies_with("un texte propre");
     harness.insertion.fails("paste never landed");
 
     // When

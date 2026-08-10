@@ -1,5 +1,5 @@
 {
-  "_readme": "Live golden suite contract: the shipped template dictionary (mirror of TEMPLATE in core/calamo-adapters/src/dictionary.rs, guarded by GoldenVectorsGuardTests) boosted over the private live corpus in the gitignored audioDirectory. Hard assertions only, no statistical layer: exact detected language, a boosted term may appear no more often than the take dictated it (injection bound), expectedTerms present on the nominal alias takes. neverSpokenTerms documents the never-spoken split; the injection bound subsumes it. Why this suite exists (the small-dictionary regime): docs/golden-suites.md. Recording recipe: fixtures/audio/README.md.",
+  "_readme": "Live golden suite contract: the shipped template dictionary (mirror of TEMPLATE in core/calamo-adapters/src/dictionary.rs, guarded by GoldenVectorsGuardTests) boosted over the private live corpus in the gitignored audioDirectory. Hard assertions only, no statistical layer: a boosted term may appear no more often than the take dictated it (injection bound), expectedTerms present on the nominal alias takes. neverSpokenTerms documents the never-spoken split; the injection bound subsumes it. Why this suite exists (the small-dictionary regime): docs/golden-suites.md. Recording recipe: fixtures/audio/README.md.",
   "audioDirectory": "audio/local/live",
   "boost": {
     "minSimilarity": 0.85,

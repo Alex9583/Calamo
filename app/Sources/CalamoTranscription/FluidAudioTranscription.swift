@@ -47,14 +47,14 @@ public final class FluidAudioTranscription: TranscriptionPort, @unchecked Sendab
         // An empty Utterance must surface as an empty transcript so the engine
         // fails the dictation as EmptyDictation, not TranscriptionFailed.
         guard !samples.isEmpty else {
-            return RawTranscript(text: "", language: .english)
+            return RawTranscript(text: "")
         }
         do {
             let stack = stack
             let text = try SyncBridge.run {
                 try await stack.transcribe(samples, boostList: boostList)
             }
-            return RawTranscript(text: text, language: UtteranceLanguage.detect(in: text))
+            return RawTranscript(text: text)
         } catch {
             throw TranscriptionError.Failed(message: String(describing: error))
         }

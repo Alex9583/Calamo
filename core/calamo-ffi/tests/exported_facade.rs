@@ -8,8 +8,8 @@ use std::time::Duration;
 
 use calamo_ffi::{
     BoostEntry, DictationEngine, DictationObserver, DictationState, DictionaryLoadError,
-    EngineConfig, EngineState, InsertionError, InsertionPort, Language, RawTranscript,
-    RefusalCause, TranscriptionError, TranscriptionPort,
+    EngineConfig, EngineState, InsertionError, InsertionPort, RawTranscript, RefusalCause,
+    TranscriptionError, TranscriptionPort,
 };
 
 struct FakeTranscription;
@@ -22,7 +22,6 @@ impl TranscriptionPort for FakeTranscription {
     ) -> Result<RawTranscript, TranscriptionError> {
         Ok(RawTranscript {
             text: "pousse la branche sur github".to_string(),
-            language: Language::French,
         })
     }
 }

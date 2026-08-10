@@ -4,7 +4,7 @@
 
 # Calamo
 
-**Local-only voice dictation for macOS.**
+**Local-only, multilingual voice dictation for macOS.**
 
 Hold a hotkey, speak, release — the cleaned-up text is inserted at your
 cursor, and not a single byte of audio leaves the machine.
@@ -28,9 +28,10 @@ cursor, and not a single byte of audio leaves the machine.
   app has focus
 - 100% local: speech recognition and cleanup run on-device; audio and
   text never leave the machine — no account, no cloud, no telemetry
+- Multilingual: dictate in any of 25 European languages — auto-detected
+  on every dictation, no language toggle
 - Cleanup by a local LLM: hesitations, false starts and self-corrections
   rewritten before insertion
-- Language auto-detected on every dictation (multilingual models)
 - Personal dictionary: enforced spellings with spoken aliases, biasing
   recognition and steering cleanup
 - Never loses a dictation: if cleanup fails, the raw transcript is

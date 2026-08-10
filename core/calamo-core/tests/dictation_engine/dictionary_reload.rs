@@ -2,7 +2,6 @@
 //! dictation; an invalid file keeps the previous dictionary active.
 
 use crate::support::Harness;
-use calamo_core::dictation::Language;
 use calamo_core::dictionary::{Dictionary, DictionaryEntry};
 use calamo_core::ports::DictionaryLoadError;
 
@@ -21,9 +20,7 @@ fn given_an_edited_dictionary_when_reloaded_then_the_next_dictation_uses_it() {
 
     // Then: the next dictation is boosted and enforced by the new dictionary
     assert_eq!(reloaded, Ok(()));
-    harness
-        .transcription
-        .replies_with("ouvre jira", Language::French);
+    harness.transcription.replies_with("ouvre jira");
     let id = harness.dictate(&[0.1]);
     harness.observer.wait_terminal(id);
 
@@ -83,9 +80,7 @@ fn given_an_invalid_dictionary_file_when_reloaded_then_the_previous_dictionary_s
     );
 
     // Then: dictation still runs with the previous dictionary
-    harness
-        .transcription
-        .replies_with("pousse sur github", Language::French);
+    harness.transcription.replies_with("pousse sur github");
     let id = harness.dictate(&[0.1]);
     harness.observer.wait_terminal(id);
 

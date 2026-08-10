@@ -13,7 +13,7 @@ The audio segment captured during one Dictation, between hotkey press and releas
 _Avoid_: Audio clip, recording, speech segment
 
 **RawTranscript**:
-The text produced by speech recognition from an Utterance, before any cleanup, together with the detected language.
+The text produced by speech recognition from an Utterance, before any cleanup.
 _Avoid_: Transcription, ASR output
 
 **CleanedText**:
