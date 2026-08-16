@@ -51,7 +51,11 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
             NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
         }
         if let input { accessibilityPoll = AccessibilityPoll(input: input) }
-        if OnboardingRecord.shouldShow() { showOnboarding() }
+        if OnboardingRecord.shouldShow() {
+            showOnboarding()
+        } else {
+            MicrophoneGrant.requestIfUndetermined()
+        }
         ModelLoader.start(
             engine: engine, transcription: transcription, store: store, download: downloadSink())
     }

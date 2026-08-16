@@ -24,7 +24,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 590)
+        .frame(width: 440, height: 620)
     }
 
     private var versionRow: some View {

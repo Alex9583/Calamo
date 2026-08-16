@@ -19,11 +19,11 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use calamo_adapters::cleanup::{LlamaCleanup, PINNED_GGUF_SHA256};
-use calamo_core::dictation::{Language, RawTranscript};
+use calamo_core::dictation::RawTranscript;
 use calamo_core::dictionary::{Dictionary, DictionaryEntry};
 use calamo_core::ports::CleanupPort;
 use calamo_core::spelling_enforcement;
-use contract_data::{Fixture, VectorLanguage};
+use contract_data::Fixture;
 use golden_data::GoldenVectors;
 
 struct Suite {
@@ -91,14 +91,6 @@ fn gguf_path() -> PathBuf {
         .unwrap_or_else(|| contract_data::fixtures_dir().join("models/Qwen3.5-2B-Q4_K_M.gguf"))
 }
 
-/// The mixed takes are French-dominant; the port maps them to French.
-fn core_language(language: VectorLanguage) -> Language {
-    match language {
-        VectorLanguage::En => Language::English,
-        VectorLanguage::Fr | VectorLanguage::Mixed => Language::French,
-    }
-}
-
 impl Suite {
     fn run_take(&self, fixture: &Fixture) -> TakeResult {
         match self.cleaned_and_spelled(fixture) {
@@ -118,7 +110,7 @@ impl Suite {
     }
 
     fn cleaned_and_spelled(&self, fixture: &Fixture) -> Result<String, String> {
-        let transcript = RawTranscript::new(&fixture.verbatim, core_language(fixture.lang));
+        let transcript = RawTranscript::new(&fixture.verbatim);
         let glossary: Vec<&str> = self.glossary.iter().map(String::as_str).collect();
         let cleaned = self
             .adapter
