@@ -69,6 +69,33 @@ import Testing
     #expect(appleOnly == nil)
 }
 
+@Test func givenTheFnBindingWhenTheSystemGlobeSettingIsNotDoNothingThenGuidanceIsNeeded() {
+    // Given
+    let binding = HotkeyBinding.fn
+
+    // When: AppleFnUsageType absent (macOS default) or the emoji palette
+    let absent = binding.needsGlobeGuidance(fnUsage: nil)
+    let palette = binding.needsGlobeGuidance(fnUsage: 2)
+
+    // Then
+    #expect(absent)
+    #expect(palette)
+}
+
+@Test func givenDoNothingAppliedOrAChordBindingWhenAskingForGuidanceThenNoneIsOwed() {
+    // Given
+    let fn = HotkeyBinding.fn
+    let chord = HotkeyBinding.chord([.control, .option])
+
+    // When: 0 is « Do Nothing »
+    let applied = fn.needsGlobeGuidance(fnUsage: 0)
+    let chordBound = chord.needsGlobeGuidance(fnUsage: 2)
+
+    // Then
+    #expect(!applied)
+    #expect(!chordBound)
+}
+
 @Test func givenEachBindingKindWhenAskingWhoSwallowsTapEventsThenOnlyFnDoes() {
     // Given
     let fn = HotkeyBinding.fn
@@ -78,8 +105,8 @@ import Testing
     let fnSwallows = fn.swallowsEvents
     let chordSwallows = chord.swallowsEvents
 
-    // Then: Fn swallowed suppresses globe actions; bare modifiers trigger
-    // nothing, and swallowing them would desync frontmost apps
+    // Then: Fn swallowed stays invisible to frontmost apps; bare modifiers
+    // trigger nothing, and swallowing them would desync those apps
     #expect(fnSwallows)
     #expect(!chordSwallows)
 }

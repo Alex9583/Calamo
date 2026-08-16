@@ -1,10 +1,8 @@
 /// Shortcut recorder fed by the live tap, so a recording can never start a
-/// dictation. Fn's press or a chord's first release decides the capture;
-/// the verdict is only emitted once the chord is fully released, and every
-/// flags event is swallowed until then — a leaked release would reach the
-/// system as a completed press (Fn would open the emoji palette). Escape
-/// cancels, aborting even a decided capture while it drains. Plain keys
-/// pass through.
+/// dictation. Fn's press or a chord's first release decides; the verdict
+/// waits for the full release, flags swallowed until then — a leak would
+/// desync or trigger the frontmost app. The swallow cannot stop the 🌐
+/// action: macOS decides a brief Fn press ahead of the tap.
 public struct BindingRecorder: Sendable {
     public enum Verdict: Equatable, Sendable {
         case recording

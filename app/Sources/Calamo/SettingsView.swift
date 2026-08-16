@@ -8,6 +8,7 @@ struct SettingsView: View {
         Form {
             Section("Shortcut") {
                 shortcutRow
+                globeGuidanceRow
                 proposalRow
             }
             Section("Microphone") {
@@ -65,15 +66,32 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder private var globeGuidanceRow: some View {
+        if model.globeGuidanceNeeded {
+            hintRow(GlobeKeyGuidance.message, button: "Open Keyboard Settings") {
+                SystemSettings.openKeyboard()
+            }
+        }
+    }
+
     @ViewBuilder private var proposalRow: some View {
         if let proposal = model.proposal, !model.isRecording {
-            HStack {
-                Text("External keyboard detected — \(proposal.label) needs no Fn key.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Use \(proposal.label)") { model.acceptProposal() }
-            }
+            hintRow(
+                "External keyboard detected — \(proposal.label) needs no Fn key.",
+                button: "Use \(proposal.label)"
+            ) { model.acceptProposal() }
+        }
+    }
+
+    private func hintRow(
+        _ text: String, button: String, action: @escaping () -> Void
+    ) -> some View {
+        HStack {
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button(button, action: action)
         }
     }
 

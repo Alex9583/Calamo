@@ -37,12 +37,11 @@ struct AccessibilityStepView: View {
     }
 }
 
-/// Holding Fn otherwise opens the emoji palette on Apple keyboards.
 struct GlobeKeyGuide: View {
     var body: some View {
         VStack(spacing: 8) {
             Divider().padding(.vertical, 4)
-            Text("Apple keyboard: set « Press 🌐 key to » to « Do Nothing » so holding Fn only dictates.")
+            Text(GlobeKeyGuidance.message)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

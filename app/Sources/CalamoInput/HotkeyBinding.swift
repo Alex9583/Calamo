@@ -4,11 +4,18 @@ public enum HotkeyBinding: Equatable, Sendable {
     case fn
     case chord(HotkeyModifiers)
 
-    /// Fn swallowed keeps the globe key from firing system actions; chord
+    /// Fn swallowed stays invisible to the frontmost app; chord
     /// flagsChanged pass through — bare modifiers trigger nothing, and
     /// swallowing them would desync the frontmost app's modifier state.
     public var swallowsEvents: Bool {
         self == .fn
+    }
+
+    /// macOS decides a brief Fn press ahead of the tap: unless the system
+    /// « Press 🌐 key to » is « Do Nothing » (`AppleFnUsageType` 0, absent
+    /// meaning the default), the 🌐 action fires despite the swallow.
+    public func needsGlobeGuidance(fnUsage: Int?) -> Bool {
+        self == .fn && fnUsage != 0
     }
 
     public var label: String {

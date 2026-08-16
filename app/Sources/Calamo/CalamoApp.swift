@@ -42,15 +42,8 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         menuBar.openSettings = { [weak self] in self?.showSettings() }
         (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
         self.store = store
-        input = PushToTalkInput(
-            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
-            binding: HotkeyPreference.load(),
-            captureDevice: { MicrophonePreference.currentDeviceID() })
+        startInput(sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
-        if input?.start() != true {
-            NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
-        }
-        if let input { accessibilityPoll = AccessibilityPoll(input: input) }
         if OnboardingRecord.shouldShow() {
             showOnboarding()
         } else {
@@ -58,6 +51,18 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         }
         ModelLoader.start(
             engine: engine, transcription: transcription, store: store, download: downloadSink())
+    }
+
+    private func startInput(sink: DictationInputSink) {
+        let input = PushToTalkInput(
+            sink: sink,
+            binding: HotkeyPreference.load(),
+            captureDevice: { MicrophonePreference.currentDeviceID() })
+        self.input = input
+        if !input.start() {
+            NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
+        }
+        accessibilityPoll = AccessibilityPoll(input: input)
     }
 
     /// Before ModelLoader.start: the wizard must not miss the first

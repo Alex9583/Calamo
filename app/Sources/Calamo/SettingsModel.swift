@@ -10,6 +10,7 @@ final class SettingsModel: ObservableObject {
     @Published private(set) var binding = HotkeyPreference.load()
     @Published private(set) var isRecording = false
     @Published private(set) var proposal: HotkeyBinding?
+    @Published private(set) var globeGuidanceNeeded = false
     @Published private(set) var microphones: [AudioInputDevice] = []
     @Published private(set) var microphoneChoice = MicrophoneChoice.systemDefault
     @Published private(set) var soundsEnabled = DictationSounds().enabled
@@ -24,6 +25,7 @@ final class SettingsModel: ObservableObject {
 
     func refresh() {
         refreshMicrophones()
+        refreshGlobeGuidance()
         proposal = HotkeyBinding.proposal(
             current: binding,
             hasNonAppleExternalKeyboard: KeyboardDetection.hasNonAppleExternalKeyboard())
@@ -93,6 +95,12 @@ final class SettingsModel: ObservableObject {
         input.rebind(to: newBinding)
         binding = newBinding
         proposal = nil
+        refreshGlobeGuidance()
+    }
+
+    private func refreshGlobeGuidance() {
+        globeGuidanceNeeded = binding.needsGlobeGuidance(
+            fnUsage: GlobeKeyGuidance.systemFnUsage())
     }
 
     private func refreshMicrophones() {
