@@ -6,6 +6,7 @@ import SwiftUI
 /// what to show was decided in CalamoFeedback.
 @MainActor
 final class OverlayController {
+    var onShown: (() -> Void)?
     private let panel = OverlayPanel()
     private let model = OverlayModel()
     private var dissolve: Timer?
@@ -40,6 +41,21 @@ final class OverlayController {
         model.push(level: level)
     }
 
+    /// Pays the pill's first-show costs — window-server window, SwiftUI
+    /// graph, fonts — invisibly, so the first press renders it warm. A pill
+    /// already on screen paid them itself.
+    func prewarm() {
+        guard model.display == .hidden else { return }
+        model.show(.waveform)
+        panel.alphaValue = 0
+        position()
+        panel.orderFrontRegardless()
+        panel.contentView?.layoutSubtreeIfNeeded()
+        panel.displayIfNeeded()
+        panel.orderOut(nil)
+        model.show(.hidden)
+    }
+
     private func scheduleDissolve(after delay: TimeInterval, revertingTo revert: OverlayDisplay?) {
         dissolve = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
             onMain {
@@ -56,6 +72,7 @@ final class OverlayController {
             panel.animator().alphaValue = 1
         }
         panel.orderFrontRegardless()
+        onShown?()
     }
 
     private func hide() {

@@ -71,6 +71,9 @@ applied.
      bottom-centered on the focused screen moving with your voice, end
      chime; a brief wait animation, then the pill dissolves as the text
      lands at the caret.
+   - [ ] On the launch's very first dictation the pill appears as
+     instantly as on the following ones (`CALAMO_TRACE=1` logs
+     « pill shown — N ms after press » to compare).
    - [ ] Ordinary typing and shortcuts stay untouched between dictations.
 2. Settings…, with Fn bound and System Settings → Keyboard → « Press 🌐
    key to » on its macOS default — anything but « Do Nothing ».

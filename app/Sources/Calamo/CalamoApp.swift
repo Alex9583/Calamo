@@ -31,6 +31,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let trace = PipelineTrace.fromEnvironment
         let overlay = OverlayController()
+        if let trace { overlay.onShown = { trace.recordPillShown() } }
         let menuBar = MenuBarController()
         menuBar.coldStart = UpdateDetection.coldStart()
         let transcription = DeferredTranscription()
@@ -122,7 +123,10 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         let relay = OnboardingRelay(
             wrapping: menuBar,
             onEngineState: { [weak self] state in
-                onMain { self?.onboarding?.model.engineChanged(state) }
+                onMain {
+                    self?.onboarding?.model.engineChanged(state)
+                    if state == .ready { self?.input?.prewarmCapture() }
+                }
             },
             onDictationCompleted: { [weak self] in
                 onMain { self?.onboarding?.model.dictationCompleted() }

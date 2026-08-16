@@ -14,6 +14,25 @@ final class PipelineTrace: @unchecked Sendable {
     private var pushChunks = 0
     private var captureOpen = false
     private var released: [DispatchTime] = []
+    private var pressed: DispatchTime?
+
+    func recordPress() {
+        lock.withLock { pressed = .now() }
+    }
+
+    /// The first pill after a press times the press → feedback path; later
+    /// re-shows time nothing. A re-show racing a fresh press may eat its
+    /// stamp — tolerated: the launch's first line is the one watched.
+    func recordPillShown() {
+        let pressed = lock.withLock {
+            defer { self.pressed = nil }
+            return self.pressed
+        }
+        guard let pressed else { return }
+        log(String(
+            format: "pill shown — %.0f ms after press",
+            Self.seconds(from: pressed, to: .now()) * 1000))
+    }
 
     func measurePush(_ push: () -> Void) {
         let start = DispatchTime.now()

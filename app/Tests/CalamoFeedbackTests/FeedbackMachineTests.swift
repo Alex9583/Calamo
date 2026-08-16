@@ -198,6 +198,41 @@ func givenAnyDictationAttemptWhenItIsRefusedThenTheCauseShowsBrieflyWithoutASoun
     #expect(reaction.step.display == .notice("Models loading…"))
 }
 
+@Test func givenAFreshLaunchWhenTheEngineFirstBecomesReadyThenTheFeedbackWarmupFires() {
+    // Given
+    var machine = FeedbackMachine()
+
+    // When
+    let warms = machine.handle(engine: .ready)
+
+    // Then
+    #expect(warms)
+}
+
+@Test func givenAFreshLaunchWhenTheEngineIsOnlyLoadingThenTheWarmupWaits() {
+    // Given
+    var machine = FeedbackMachine()
+
+    // When
+    let warms = machine.handle(engine: .loading)
+
+    // Then
+    #expect(!warms)
+}
+
+@Test func givenAWarmedLaunchWhenARedownloadCycleEndsReadyThenTheWarmupDoesNotRefire() {
+    // Given
+    var machine = FeedbackMachine()
+    machine.handle(engine: .ready)
+    machine.handle(engine: .loading)
+
+    // When
+    let warms = machine.handle(engine: .ready)
+
+    // Then
+    #expect(!warms)
+}
+
 @Test func givenACompletedDictationWhenANewCaptureBeginsThenTheStartSoundPlaysAgain() {
     // Given
     var machine = FeedbackMachine()
