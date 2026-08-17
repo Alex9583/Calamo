@@ -21,7 +21,7 @@ enum MenuBarIconRenderer {
 
     private static func baseGlyph() -> NSImage {
         let image =
-            Bundle.module.url(forResource: "menubar-template", withExtension: "svg")
+            Bundle.calamoResources.url(forResource: "menubar-template", withExtension: "svg")
             .flatMap { NSImage(contentsOf: $0) }
             ?? NSImage(systemSymbolName: "waveform", accessibilityDescription: "Calamo")
             ?? NSImage()
