@@ -44,24 +44,27 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         menuBar.openSettings = { [weak self] in self?.showSettings() }
         (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
         self.store = store
-        startInput(sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace))
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
-        if OnboardingRecord.shouldShow() {
-            showOnboarding()
-        } else {
-            MicrophoneGrant.requestIfUndetermined()
-        }
+        let wizardLaunch = OnboardingRecord.shouldShow()
+        if wizardLaunch { showOnboarding() } else { MicrophoneGrant.requestIfUndetermined() }
         ModelLoader.start(
             engine: engine, transcription: transcription, store: store, download: downloadSink())
+        startInput(
+            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
+            deferTap: wizardLaunch)
     }
 
-    private func startInput(sink: DictationInputSink) {
+    /// After ModelLoader.start — the download must not wait behind the
+    /// Accessibility prompt that creating the active tap fires when the
+    /// grant is missing. Deferred, the poll creates the tap once the
+    /// wizard step lands the grant.
+    private func startInput(sink: DictationInputSink, deferTap: Bool) {
         let input = PushToTalkInput(
             sink: sink,
             binding: HotkeyPreference.load(),
             captureDevice: { MicrophonePreference.currentDeviceID() })
         self.input = input
-        if !input.start() {
+        if !deferTap, !input.start() {
             NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
         }
         accessibilityPoll = AccessibilityPoll(input: input)
