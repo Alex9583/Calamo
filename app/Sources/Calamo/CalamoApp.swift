@@ -23,6 +23,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
 
     static func main() {
         let app = NSApplication.shared
+        EditMenu.install(into: app)
         let delegate = CalamoApp()
         app.delegate = delegate
         app.run()
