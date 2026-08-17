@@ -11,7 +11,7 @@ struct QuillView: View {
     /// The nib lands here once the mark is mirrored nib-rightward.
     private static let nib = UnitPoint(x: 0.76, y: 0.75)
     private static let mark: NSImage =
-        Bundle.module.url(forResource: "menubar-template", withExtension: "svg")
+        Bundle.calamoResources.url(forResource: "menubar-template", withExtension: "svg")
         .flatMap { NSImage(contentsOf: $0) }
         ?? NSImage(systemSymbolName: "pencil", accessibilityDescription: "Calamo")
         ?? NSImage()
