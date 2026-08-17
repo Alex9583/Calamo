@@ -2,7 +2,7 @@
 //! and the Dictation is Completed, never Failed.
 
 use crate::support::Harness;
-use calamo_core::dictation::{DictationState, Language};
+use calamo_core::dictation::DictationState;
 use calamo_core::dictionary::{Dictionary, DictionaryEntry};
 
 #[test]
@@ -11,9 +11,7 @@ fn given_a_failing_cleanup_when_a_dictation_is_spoken_then_the_enforced_verbatim
     // Given
     let dictionary = Dictionary::new(vec![DictionaryEntry::new("GitHub")]).unwrap();
     let harness = Harness::ready_with_dictionary(dictionary);
-    harness
-        .transcription
-        .replies_with("euh pousse sur github", Language::French);
+    harness.transcription.replies_with("euh pousse sur github");
     harness.cleanup.fails("llm unavailable");
 
     // When

@@ -1,0 +1,85 @@
+# Tags come from tag-release.yml (merged PR labeled patch / minor /
+# major), which dispatches this workflow at the tag ref; a manual
+# workflow_dispatch from a branch rehearses the same chain into an
+# artifact without publishing. Missing signing secrets must fail: letting
+# create-signing-identity.sh mint a fresh certificate would change the
+# designated requirement and cost every user their TCC grants at the
+# next update.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    name: macOS — signed DMG
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # CFBundleVersion = commit count
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+      - name: Restore the stable signing identity
+        env:
+          CERT_PEM: ${{ secrets.CALAMO_SIGNING_CERT_PEM }}
+          KEY_PEM: ${{ secrets.CALAMO_SIGNING_KEY_PEM }}
+        run: |
+          if [ -z "$CERT_PEM" ] || [ -z "$KEY_PEM" ]; then
+            echo "::error::CALAMO_SIGNING_*_PEM secrets missing — refusing to mint a fresh certificate"
+            exit 1
+          fi
+          mkdir -p ~/.calamo-signing
+          printf '%s\n' "$CERT_PEM" > ~/.calamo-signing/cert.pem
+          printf '%s\n' "$KEY_PEM" > ~/.calamo-signing/key.pem
+          ./scripts/create-signing-identity.sh
+      - name: Build chain
+        run: ./build.sh
+      - name: Package DMG
+        run: |
+          pipx install dmgbuild
+          VERSION="0.0.0-rehearsal"
+          [ "$GITHUB_REF_TYPE" = "tag" ] && VERSION="${GITHUB_REF_NAME#v}"
+          scripts/package.sh "$VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: build/Calamo-*.dmg
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DMG=(build/Calamo-*.dmg)
+          SHA="$(shasum -a 256 "${DMG[0]}" | cut -d' ' -f1)"
+          cat > /tmp/notes.md <<EOF
+          **Install** — drag Calamo into /Applications first, then walk the
+          Gatekeeper path pictured on the DMG: open Calamo → "Done" →
+          System Settings → Privacy & Security → "Open Anyway" (again after
+          every update). Or: \`brew tap alex9583/calamo && brew install --cask calamo\`.
+
+          DMG SHA-256, for \`Casks/calamo.rb\`:
+
+              $SHA
+
+          Speech recognition by NVIDIA Parakeet models (CC BY 4.0);
+          cleanup by Qwen3.5-2B (Apache-2.0).
+          EOF
+          # --generate-notes appends GitHub's changelog (merged PRs since
+          # the previous tag) after the install notes.
+          gh release create "$GITHUB_REF_NAME" "${DMG[0]}" --verify-tag \
+            --title "Calamo ${GITHUB_REF_NAME#v}" \
+            --notes-file /tmp/notes.md --generate-notes

@@ -1,7 +1,8 @@
 import CalamoInput
 
-/// Times each push_audio FFI call and stamps the release before it crosses,
-/// so the traced latency covers the whole release-to-insertion path.
+/// Times each push_audio FFI call and stamps the press and release before
+/// they cross, so the traced latencies cover the press-to-pill and
+/// release-to-insertion paths whole.
 final class TracingInputSink: DictationInputSink {
     private let wrapped: DictationInputSink
     private let trace: PipelineTrace
@@ -11,7 +12,10 @@ final class TracingInputSink: DictationInputSink {
         self.trace = trace
     }
 
-    func hotkeyPressed() { wrapped.hotkeyPressed() }
+    func hotkeyPressed() {
+        trace.recordPress()
+        wrapped.hotkeyPressed()
+    }
 
     func pushAudio(samples: [Float]) {
         trace.measurePush { wrapped.pushAudio(samples: samples) }

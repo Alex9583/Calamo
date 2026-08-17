@@ -4,7 +4,7 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-use calamo_core::dictation::{Language, RawTranscript, Utterance};
+use calamo_core::dictation::{RawTranscript, Utterance};
 use calamo_core::dictionary::DictionaryEntry;
 use calamo_core::ports::{TranscriptionError, TranscriptionPort};
 
@@ -33,15 +33,12 @@ impl ScriptedTranscription {
         })
     }
 
-    pub fn replies_with(&self, text: &str, language: Language) {
-        self.push(None, Ok(RawTranscript::new(text, language)));
+    pub fn replies_with(&self, text: &str) {
+        self.push(None, Ok(RawTranscript::new(text)));
     }
 
-    pub fn replies_after(&self, gate: &Arc<Gate>, text: &str, language: Language) {
-        self.push(
-            Some(Arc::clone(gate)),
-            Ok(RawTranscript::new(text, language)),
-        );
+    pub fn replies_after(&self, gate: &Arc<Gate>, text: &str) {
+        self.push(Some(Arc::clone(gate)), Ok(RawTranscript::new(text)));
     }
 
     pub fn fails(&self, message: &str) {
@@ -83,10 +80,7 @@ impl TranscriptionPort for ScriptedTranscription {
                 }
                 reply.result
             }
-            None => Ok(RawTranscript::new(
-                "unscripted transcript",
-                Language::English,
-            )),
+            None => Ok(RawTranscript::new("unscripted transcript")),
         }
     }
 }

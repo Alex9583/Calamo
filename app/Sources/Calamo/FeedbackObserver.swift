@@ -29,8 +29,14 @@ final class FeedbackObserver: DictationObserver, @unchecked Sendable {
 
     func engineStateChanged(state: EngineState) {
         lock.lock()
-        machine.handle(engine: state)
+        let warms = machine.handle(engine: state)
         lock.unlock()
+        if warms {
+            onMain {
+                self.sounds.prewarm()
+                self.overlay.prewarm()
+            }
+        }
         wrapped.engineStateChanged(state: state)
     }
 

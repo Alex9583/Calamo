@@ -49,33 +49,19 @@ impl Utterance {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Language {
-    French,
-    English,
-}
-
-/// Speech-recognition output before any cleanup, with its detected language.
+/// Speech-recognition output before any cleanup.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawTranscript {
     text: String,
-    language: Language,
 }
 
 impl RawTranscript {
-    pub fn new(text: impl Into<String>, language: Language) -> Self {
-        Self {
-            text: text.into(),
-            language,
-        }
+    pub fn new(text: impl Into<String>) -> Self {
+        Self { text: text.into() }
     }
 
     pub fn text(&self) -> &str {
         &self.text
-    }
-
-    pub fn language(&self) -> Language {
-        self.language
     }
 }
 

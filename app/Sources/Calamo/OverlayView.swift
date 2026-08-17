@@ -6,11 +6,14 @@ struct OverlayView: View {
 
     var body: some View {
         if model.display != .hidden {
-            content
-                .padding(.horizontal, 18)
-                .frame(height: 40)
-                .background(.black.opacity(0.85), in: Capsule())
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HStack(spacing: 10) {
+                QuillView(writing: model.display == .waiting)
+                content
+            }
+            .padding(.horizontal, 18)
+            .frame(height: 40)
+            .background(.black.opacity(0.85), in: Capsule())
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -28,33 +31,25 @@ struct OverlayView: View {
     }
 }
 
-/// One bar per metered chunk; waiting freezes the bars and pulses them.
+/// One bar per metered chunk, drifting toward the quill that drinks them;
+/// waiting settles the bars into a flat ink line while the quill writes.
 struct WaveformView: View {
     let levels: [Float]
     let waiting: Bool
-    @State private var pulsing = false
 
     var body: some View {
         HStack(spacing: 3) {
             ForEach(levels.indices, id: \.self) { index in
                 Capsule()
                     .fill(.white)
-                    .frame(width: 3, height: 4 + 24 * CGFloat(levels[index]))
+                    .frame(width: 3, height: 4 + 24 * level(at: index))
             }
         }
         .animation(.easeOut(duration: 0.12), value: levels)
-        .opacity(pulsing ? 0.35 : 1)
-        .onAppear { updatePulse() }
-        .onChange(of: waiting) { updatePulse() }
+        .animation(.easeOut(duration: 0.3), value: waiting)
     }
 
-    private func updatePulse() {
-        if waiting {
-            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
-                pulsing = true
-            }
-        } else {
-            withAnimation(.default) { pulsing = false }
-        }
+    private func level(at index: Int) -> CGFloat {
+        waiting ? 0 : CGFloat(levels[index])
     }
 }

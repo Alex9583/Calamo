@@ -12,15 +12,21 @@ public struct FeedbackMachine {
     /// must give the pill back to.
     private var inFlight: OverlayDisplay?
     private var coldStart: ColdStart
+    private var warmed = false
 
     public init(coldStart: ColdStart = .ordinary) {
         self.coldStart = coldStart
     }
 
     /// Ready ends the cold start: later loading cycles are redownloads,
-    /// not the post-update compile.
-    public mutating func handle(engine state: EngineState) {
-        if state == .ready { coldStart = .ordinary }
+    /// not the post-update compile. True on the launch's first Ready — the
+    /// one moment to pay the cold feedback costs (pill render, chime load).
+    @discardableResult
+    public mutating func handle(engine state: EngineState) -> Bool {
+        guard state == .ready else { return false }
+        coldStart = .ordinary
+        defer { warmed = true }
+        return !warmed
     }
 
     public mutating func handle(_ state: DictationState) -> FeedbackReaction {

@@ -53,7 +53,8 @@ let package = Package(
         .testTarget(
             name: "CalamoTests",
             dependencies: [
-                .product(name: "CalamoCore", package: "CalamoCore")
+                "Calamo",
+                .product(name: "CalamoCore", package: "CalamoCore"),
             ],
             path: "Tests/CalamoTests",
             swiftSettings: [.swiftLanguageMode(.v5)]

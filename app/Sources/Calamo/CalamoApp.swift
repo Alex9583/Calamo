@@ -23,6 +23,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
 
     static func main() {
         let app = NSApplication.shared
+        EditMenu.install(into: app)
         let delegate = CalamoApp()
         app.delegate = delegate
         app.run()
@@ -31,6 +32,7 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let trace = PipelineTrace.fromEnvironment
         let overlay = OverlayController()
+        if let trace { overlay.onShown = { trace.recordPillShown() } }
         let menuBar = MenuBarController()
         menuBar.coldStart = UpdateDetection.coldStart()
         let transcription = DeferredTranscription()
@@ -42,18 +44,30 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         menuBar.openSettings = { [weak self] in self?.showSettings() }
         (self.engine, self.menuBar, self.transcription) = (engine, menuBar, transcription)
         self.store = store
-        input = PushToTalkInput(
-            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
-            binding: HotkeyPreference.load(),
-            captureDevice: { MicrophonePreference.currentDeviceID() })
         dictionaryWatcher = DictionaryHotReload.start(engine: engine)
-        if input?.start() != true {
-            NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
-        }
-        if let input { accessibilityPoll = AccessibilityPoll(input: input) }
-        if OnboardingRecord.shouldShow() { showOnboarding() }
+        let wizardLaunch = OnboardingRecord.shouldShow()
+        if wizardLaunch { showOnboarding() } else { MicrophoneGrant.requestIfUndetermined() }
         ModelLoader.start(
             engine: engine, transcription: transcription, store: store, download: downloadSink())
+        startInput(
+            sink: Self.makeSink(engine: engine, overlay: overlay, trace: trace),
+            deferTap: wizardLaunch)
+    }
+
+    /// After ModelLoader.start — the download must not wait behind the
+    /// Accessibility prompt that creating the active tap fires when the
+    /// grant is missing. Deferred, the poll creates the tap once the
+    /// wizard step lands the grant.
+    private func startInput(sink: DictationInputSink, deferTap: Bool) {
+        let input = PushToTalkInput(
+            sink: sink,
+            binding: HotkeyPreference.load(),
+            captureDevice: { MicrophonePreference.currentDeviceID() })
+        self.input = input
+        if !deferTap, !input.start() {
+            NSLog("Calamo: event tap unavailable — waiting for the Accessibility grant")
+        }
+        accessibilityPoll = AccessibilityPoll(input: input)
     }
 
     /// Before ModelLoader.start: the wizard must not miss the first
@@ -113,7 +127,10 @@ final class CalamoApp: NSObject, NSApplicationDelegate {
         let relay = OnboardingRelay(
             wrapping: menuBar,
             onEngineState: { [weak self] state in
-                onMain { self?.onboarding?.model.engineChanged(state) }
+                onMain {
+                    self?.onboarding?.model.engineChanged(state)
+                    if state == .ready { self?.input?.prewarmCapture() }
+                }
             },
             onDictationCompleted: { [weak self] in
                 onMain { self?.onboarding?.model.dictationCompleted() }

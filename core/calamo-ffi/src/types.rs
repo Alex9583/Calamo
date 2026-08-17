@@ -1,16 +1,9 @@
 //! Records and enums crossing the boundary, mirrored field for field from
 //! the core so the domain stays free of FFI concerns.
 
-#[derive(Debug, Clone, PartialEq, uniffi::Enum)]
-pub enum Language {
-    French,
-    English,
-}
-
 #[derive(Debug, Clone, PartialEq, uniffi::Record)]
 pub struct RawTranscript {
     pub text: String,
-    pub language: Language,
 }
 
 /// One Dictionary entry handed to speech recognition for boosting.

@@ -8,6 +8,7 @@ struct SettingsView: View {
         Form {
             Section("Shortcut") {
                 shortcutRow
+                globeGuidanceRow
                 proposalRow
             }
             Section("Microphone") {
@@ -17,9 +18,39 @@ struct SettingsView: View {
             Section("Sounds") { soundsToggle }
             Section("Dictionary") { dictionaryButton }
             Section("General") { loginToggle }
+            Section("About") {
+                versionRow
+                supportText
+                attributionText
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 480)
+        .frame(width: 440, height: 620)
+    }
+
+    private var versionRow: some View {
+        LabeledContent(
+            "Version",
+            value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+                as? String ?? "dev")
+    }
+
+    private var supportText: some View {
+        Text("Enjoying Calamo? [Buy me a coffee](https://buymeacoffee.com/alextdev) ☕️")
+            .font(.callout)
+    }
+
+    private var attributionText: some View {
+        Text(
+            """
+            Speech recognition by NVIDIA's Parakeet models, used under \
+            [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) \
+            (CoreML conversion by FluidInference). \
+            Cleanup by Qwen3.5-2B (Apache-2.0).
+            """
+        )
+        .font(.callout)
+        .foregroundStyle(.secondary)
     }
 
     private var shortcutRow: some View {
@@ -35,15 +66,32 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder private var globeGuidanceRow: some View {
+        if model.globeGuidanceNeeded {
+            hintRow(GlobeKeyGuidance.message, button: "Open Keyboard Settings") {
+                SystemSettings.openKeyboard()
+            }
+        }
+    }
+
     @ViewBuilder private var proposalRow: some View {
         if let proposal = model.proposal, !model.isRecording {
-            HStack {
-                Text("External keyboard detected — \(proposal.label) needs no Fn key.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Use \(proposal.label)") { model.acceptProposal() }
-            }
+            hintRow(
+                "External keyboard detected — \(proposal.label) needs no Fn key.",
+                button: "Use \(proposal.label)"
+            ) { model.acceptProposal() }
+        }
+    }
+
+    private func hintRow(
+        _ text: String, button: String, action: @escaping () -> Void
+    ) -> some View {
+        HStack {
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button(button, action: action)
         }
     }
 

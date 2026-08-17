@@ -2,7 +2,7 @@
 //! yields an immediate, motivated refusal, never a silent wait.
 
 use crate::support::{Harness, Observed};
-use calamo_core::dictation::{DictationState, Language};
+use calamo_core::dictation::DictationState;
 use calamo_core::engine::{EngineState, RefusalCause, UnavailabilityCause};
 
 #[test]
@@ -87,9 +87,7 @@ fn given_a_refused_press_when_audio_is_pushed_anyway_then_no_ghost_audio_haunts_
 
     // When: the engine becomes ready and a real dictation is spoken
     harness.engine.mark_ready();
-    harness
-        .transcription
-        .replies_with("le vrai texte", Language::French);
+    harness.transcription.replies_with("le vrai texte");
     let id = harness.dictate(&[0.1, 0.2]);
     harness.observer.wait_terminal(id);
 

@@ -18,9 +18,9 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use calamo_adapters::cleanup::LlamaCleanup;
-use calamo_core::dictation::{Language, RawTranscript};
+use calamo_core::dictation::RawTranscript;
 use calamo_core::ports::CleanupPort;
-use contract_data::{Contract, CorpusVector, Fixture, Manifest, SyntheticVector, VectorLanguage};
+use contract_data::{Contract, CorpusVector, Fixture, Manifest, SyntheticVector};
 
 struct Harness {
     adapter: LlamaCleanup,
@@ -62,24 +62,11 @@ fn gguf_path() -> PathBuf {
         .unwrap_or_else(|| contract_data::fixtures_dir().join("models/Qwen3.5-2B-Q4_K_M.gguf"))
 }
 
-/// The mixed takes are French-dominant; the port maps them to French.
-fn core_language(language: VectorLanguage) -> Language {
-    match language {
-        VectorLanguage::En => Language::English,
-        VectorLanguage::Fr | VectorLanguage::Mixed => Language::French,
-    }
-}
-
 impl Harness {
     /// Every vector runs twice: temperature 0 over a restored prefix snapshot
     /// promises byte-identical outputs.
-    fn clean_twice(
-        &self,
-        id: &str,
-        verbatim: &str,
-        language: VectorLanguage,
-    ) -> Result<String, String> {
-        let transcript = RawTranscript::new(verbatim, core_language(language));
+    fn clean_twice(&self, id: &str, verbatim: &str) -> Result<String, String> {
+        let transcript = RawTranscript::new(verbatim);
         let glossary: Vec<&str> = self.glossary.iter().map(String::as_str).collect();
         let run = || {
             let started = Instant::now();
@@ -120,7 +107,7 @@ impl Harness {
             let fixture = manifest
                 .fixture(&vector.id)
                 .expect("guard-checked coverage");
-            match self.clean_twice(&vector.id, &fixture.verbatim, fixture.lang) {
+            match self.clean_twice(&vector.id, &fixture.verbatim) {
                 Err(failure) => failures.push(failure),
                 Ok(output) => {
                     failures.extend(self.check_corpus(vector, fixture, &output));
@@ -136,7 +123,7 @@ impl Harness {
         failures: &mut Vec<String>,
     ) {
         for vector in &self.contract.synthetic {
-            match self.clean_twice(&vector.id, &vector.verbatim, vector.language) {
+            match self.clean_twice(&vector.id, &vector.verbatim) {
                 Err(failure) => failures.push(failure),
                 Ok(output) => {
                     failures.extend(self.check_synthetic(vector, &output));

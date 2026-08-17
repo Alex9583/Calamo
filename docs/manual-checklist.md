@@ -60,21 +60,37 @@ quoted exactly — a paraphrased label is a deviation.
 
 ### A2 Push-to-talk
 
+macOS decides a brief Fn press ahead of the app: unless « Press 🌐
+key to » is « Do Nothing », the 🌐 action fires no matter what Calamo
+swallows. The 🌐 checks below therefore run with the guidance of step 2
+applied.
+
 1. Focus TextEdit, hold Fn, say « bonjour, ceci est un premier essai »,
    release.
    - [ ] Capture runs only while held: start chime, waveform pill
      bottom-centered on the focused screen moving with your voice, end
      chime; a brief wait animation, then the pill dissolves as the text
      lands at the caret.
-   - [ ] The 🌐 system action (emoji picker, input switching) never fires
-     from the hold.
+   - [ ] On the launch's very first dictation the pill appears as
+     instantly as on the following ones (`CALAMO_TRACE=1` logs
+     « pill shown — N ms after press » to compare).
    - [ ] Ordinary typing and shortcuts stay untouched between dictations.
-2. Settings… → Hold to dictate → Change…, press Fn.
+2. Settings…, with Fn bound and System Settings → Keyboard → « Press 🌐
+   key to » on its macOS default — anything but « Do Nothing ».
+   - [ ] Next to the shortcut: « Apple keyboard: set « Press 🌐 key to »
+     to « Do Nothing » so holding Fn only dictates. »; « Open Keyboard
+     Settings » opens the Keyboard pane.
+   - Pick « Do Nothing », come back to the Calamo Settings window.
+   - [ ] The guidance row is gone.
+3. With « Do Nothing » applied, dictate again, then tap Fn briefly.
+   - [ ] The 🌐 system action (emoji picker, input switching) never
+     fires — not from the hold, not from the brief press.
+4. Settings… → Hold to dictate → Change…, press Fn.
    - [ ] « Press your shortcut… (Esc cancels) »; recording never starts a
      dictation.
-   - [ ] The capture lands on the release, and the 🌐 system action
-     (emoji picker) never fires from recording Fn.
-3. Record a chord (e.g. ⌃⌥), dictate with it, rebind Fn.
+   - [ ] The capture lands on the release; with « Do Nothing » applied,
+     the 🌐 system action never fires from recording Fn.
+5. Record a chord (e.g. ⌃⌥), dictate with it, rebind Fn.
    - [ ] The chord starts and ends dictations; the menu status line names
      the current binding.
    - [ ] *(hardware)* With a non-Apple external keyboard, Settings
@@ -312,7 +328,8 @@ Quit; make a true first launch: reset both TCC grants per Setup,
   all set. » appears. Finish closes the wizard.
 - [ ] Relaunch: the wizard does not reappear.
 - [ ] Gatekeeper is mentioned nowhere in the app — that story lives on
-  the DMG background and the tap doc (ticket 22).
+  the DMG background and the tap caveats
+  ([distribution.md](distribution.md)).
 
 ### F2 Every step skippable
 

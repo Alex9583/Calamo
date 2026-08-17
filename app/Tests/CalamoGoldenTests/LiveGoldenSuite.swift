@@ -11,7 +11,6 @@ import Testing
 struct LiveGoldenSuite {
     struct TakeOutcome {
         let id: String
-        let language: String
         let text: String
         let failures: [String]
     }
@@ -39,8 +38,7 @@ struct LiveGoldenSuite {
         failures += try GoldenBaseline.checkOrBootstrap(
             name: "live-baseline.json",
             environment: environment(minSimilarity: contract.boost.minSimilarity),
-            outputs: Dictionary(
-                uniqueKeysWithValues: outcomes.map { ($0.id, "[\($0.language)] \($0.text)") }))
+            outputs: Dictionary(uniqueKeysWithValues: outcomes.map { ($0.id, $0.text) }))
         #expect(failures.isEmpty, "\n\(failures.joined(separator: "\n"))")
     }
 
@@ -51,16 +49,14 @@ struct LiveGoldenSuite {
         _ manifest: CorpusManifest
     ) throws -> TakeOutcome {
         let take = try transcribeTake(vector, adapter, contract, manifest)
-        var failures = take.languageFailures
-        failures += injectedTermBreaches(
+        var failures = injectedTermBreaches(
             contract.boostList,
             id: vector.id, output: take.text, verbatim: take.fixture.verbatim)
         failures += missingTermBreaches(
             vector.expectedTerms ?? [], id: vector.id, output: take.text)
-        print("[live-golden] \(vector.id)  lang \(take.language)  \(take.text)")
+        print("[live-golden] \(vector.id)  \(take.text)")
         failures.forEach { print("[live-golden]   HARD \($0)") }
-        return TakeOutcome(
-            id: vector.id, language: take.language, text: take.text, failures: failures)
+        return TakeOutcome(id: vector.id, text: take.text, failures: failures)
     }
 
     private func environment(minSimilarity: Float) -> GoldenEnvironment {

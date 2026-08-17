@@ -49,7 +49,7 @@ impl core_ports::TranscriptionPort for TranscriptionBridge {
             .collect();
         self.0
             .transcribe(utterance.samples().to_vec(), boost_list)
-            .map(|t| core_dictation::RawTranscript::new(t.text, t.language.into()))
+            .map(|t| core_dictation::RawTranscript::new(t.text))
             .map_err(|e| core_ports::TranscriptionError {
                 message: e.to_string(),
             })

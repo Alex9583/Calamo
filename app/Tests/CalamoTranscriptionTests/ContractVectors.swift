@@ -21,19 +21,10 @@ struct ContractVectors: Decodable, Sendable {
 
     struct Vector: Decodable, Sendable, CustomTestStringConvertible {
         let id: String
-        let language: String?
         let expectedTerms: [String]?
         let silenceSeconds: Double?
 
         var testDescription: String { id }
-
-        var expectedLanguage: CalamoCore.Language? {
-            switch language {
-            case "fr": .french
-            case "en": .english
-            default: nil
-            }
-        }
     }
 
     let audioDirectory: String

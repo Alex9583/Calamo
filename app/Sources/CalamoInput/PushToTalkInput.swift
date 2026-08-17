@@ -62,6 +62,10 @@ public final class PushToTalkInput: @unchecked Sendable {
         interpreter.rebind(to: binding)
     }
 
+    public func prewarmCapture() {
+        queue.async { self.capture.prewarm(deviceID: self.captureDevice()) }
+    }
+
     /// Routes tap events to a fresh recorder until it captures or cancels;
     /// an in-flight hold ends now and no dictation can start meanwhile.
     public func beginBindingRecording(onVerdict: @escaping (BindingRecorder.Verdict) -> Void) {

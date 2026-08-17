@@ -2,16 +2,14 @@
 //! Completed` — press, audio pushed, release, cleaned text inserted.
 
 use crate::support::Harness;
-use calamo_core::dictation::{DictationState, Language};
+use calamo_core::dictation::DictationState;
 use calamo_core::dictionary::{Dictionary, DictionaryEntry};
 
 #[test]
 fn given_a_ready_engine_when_a_dictation_is_spoken_then_the_cleaned_text_is_inserted() {
     // Given
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("euh pousse la branche", Language::French);
+    harness.transcription.replies_with("euh pousse la branche");
     harness.cleanup.replies_with("Pousse la branche.");
 
     // When
@@ -46,9 +44,7 @@ fn given_a_dictionary_when_a_dictation_is_spoken_then_its_views_feed_every_stage
     )])
     .unwrap();
     let harness = Harness::ready_with_dictionary(dictionary);
-    harness
-        .transcription
-        .replies_with("pousse sur guitte hub", Language::French);
+    harness.transcription.replies_with("pousse sur guitte hub");
     harness.cleanup.replies_with("Pousse sur guitte hub.");
 
     // When
@@ -74,9 +70,7 @@ fn given_a_dictionary_when_a_dictation_is_spoken_then_its_views_feed_every_stage
 fn given_a_ready_engine_when_a_dictation_is_spoken_then_the_observer_sees_the_whole_cycle() {
     // Given
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("bonjour à tous", Language::French);
+    harness.transcription.replies_with("bonjour à tous");
 
     // When
     let id = harness.dictate(&[0.1; 1600]);

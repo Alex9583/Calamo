@@ -3,7 +3,7 @@
 //! strictly in release order.
 
 use crate::support::{Gate, Harness, Observed};
-use calamo_core::dictation::{DictationId, DictationState, Language};
+use calamo_core::dictation::{DictationId, DictationState};
 use calamo_core::engine::RefusalCause;
 
 /// Waits until the gated transcription call has started.
@@ -24,7 +24,7 @@ fn given_a_dictation_processing_when_the_hotkey_is_pressed_then_the_next_capture
     let gate = Gate::closed();
     harness
         .transcription
-        .replies_after(&gate, "la première phrase", Language::French);
+        .replies_after(&gate, "la première phrase");
     let first = harness.dictate(&[0.1]);
     wait_transcribing(&harness, first);
 
@@ -54,10 +54,8 @@ fn given_two_dictations_in_flight_when_both_complete_then_insertions_follow_rele
     let gate = Gate::closed();
     harness
         .transcription
-        .replies_after(&gate, "la première phrase", Language::French);
-    harness
-        .transcription
-        .replies_with("la seconde phrase", Language::French);
+        .replies_after(&gate, "la première phrase");
+    harness.transcription.replies_with("la seconde phrase");
     let first = harness.dictate(&[0.1]);
     wait_transcribing(&harness, first);
     let second = harness.dictate(&[0.2]);
@@ -85,10 +83,8 @@ fn given_one_processing_and_one_waiting_when_the_hotkey_is_pressed_then_it_is_re
     let gate = Gate::closed();
     harness
         .transcription
-        .replies_after(&gate, "la première phrase", Language::French);
-    harness
-        .transcription
-        .replies_with("la seconde phrase", Language::French);
+        .replies_after(&gate, "la première phrase");
+    harness.transcription.replies_with("la seconde phrase");
     let first = harness.dictate(&[0.1]);
     wait_transcribing(&harness, first);
     let second = harness.dictate(&[0.2]);
@@ -113,9 +109,7 @@ fn given_one_processing_and_one_waiting_when_the_hotkey_is_pressed_then_it_is_re
 fn given_a_capture_in_progress_when_the_hotkey_repeats_then_the_capture_continues_undisturbed() {
     // Given
     let harness = Harness::ready();
-    harness
-        .transcription
-        .replies_with("un seul texte", Language::French);
+    harness.transcription.replies_with("un seul texte");
     harness.engine.hotkey_pressed();
     harness.engine.push_audio(&[0.1]);
 

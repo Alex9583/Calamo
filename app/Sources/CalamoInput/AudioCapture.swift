@@ -6,14 +6,33 @@
 /// chunks from an internal serial queue.
 ///
 /// @unchecked: start/stop share their caller's thread (the push-to-talk
-/// queue); `chunker` and `converter` are confined to the internal queue.
+/// queue); `chunker`, `converter` and `prewarmed` are confined to the
+/// internal queue.
 public final class AudioCapture: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.calamo.audio-capture")
     private var engine: AVAudioEngine?
     private var converter: AudioFormatConverter?
     private var chunker = AudioChunker()
+    private var prewarmed = false
 
     public init() {}
+
+    /// Pays the process-wide CoreAudio cold costs — HAL connection, AUHAL
+    /// and converter setup — without starting IO: the mic indicator stays
+    /// off. Heavy, so it runs on the internal queue — a press racing it
+    /// must never wait behind it on the push-to-talk queue.
+    public func prewarm(deviceID: AudioDeviceID?) {
+        queue.async {
+            guard !self.prewarmed,
+                AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+            else { return }
+            self.prewarmed = true
+            let engine = AVAudioEngine()
+            Self.pin(deviceID, on: engine.inputNode)
+            _ = try? Self.makeConverter(for: engine.inputNode)
+            engine.prepare()
+        }
+    }
 
     public func start(
         deviceID: AudioDeviceID?, onChunk: @escaping @Sendable ([Float]) -> Void
