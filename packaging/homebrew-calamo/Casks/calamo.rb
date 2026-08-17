@@ -3,7 +3,7 @@
 # official homebrew-cask rejects non-notarized apps.
 cask "calamo" do
   version "1.0.0"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000" # from the GitHub Release notes
+  sha256 "e4f2cd684a548f755a8a2d87effea00538f2d71986f7ac783b49563cf769ffce" # from the GitHub Release notes
 
   url "https://github.com/Alex9583/Calamo/releases/download/v#{version}/Calamo-#{version}.dmg"
   name "Calamo"
